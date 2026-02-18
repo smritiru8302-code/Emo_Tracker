@@ -14,6 +14,9 @@ import MoodTrackerScreen from '../screens/MoodTrackerScreen';
 import AssessmentScreen from '../screens/AssessmentScreen';
 import ResourcesScreen from '../screens/ResourcesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import QuizScreen from '../screens/QuizScreen';
+import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -79,8 +82,11 @@ const AppNavigator = () => {
                 initialRouteName="Onboarding"
             >
                 <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+                <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="Signup" component={SignupScreen} />
                 <Stack.Screen name="MainTabs" component={MainTabs} />
                 <Stack.Screen name="Assessment" component={AssessmentScreen} />
+                <Stack.Screen name="Quiz" component={QuizScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
