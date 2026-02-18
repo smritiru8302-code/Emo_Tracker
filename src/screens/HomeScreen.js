@@ -139,6 +139,33 @@ const HomeScreen = ({ navigation }) => {
                         icon={<Ionicons name="chatbubble" size={14} color={COLORS.white} />}
                     />
                 </GlassCard>
+                {/* Mental Health Quiz Card */}
+                <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => navigation.navigate('Quiz')}
+                >
+                    <LinearGradient
+                        colors={['#7C5CFC', '#5A3FD4']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.quizCard}
+                    >
+                        <View style={styles.quizLeft}>
+                            <Text style={styles.quizBadge}>NEW</Text>
+                            <Text style={styles.quizTitle}>Mental Health Quiz</Text>
+                            <Text style={styles.quizDesc}>
+                                Discover your mental wellness stage across 5 dimensions
+                            </Text>
+                            <View style={styles.quizMeta}>
+                                <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.7)" />
+                                <Text style={styles.quizMetaText}>3-5 min • 20 questions</Text>
+                            </View>
+                        </View>
+                        <View style={styles.quizIconWrap}>
+                            <Ionicons name="brain" size={40} color="rgba(255,255,255,0.25)" />
+                        </View>
+                    </LinearGradient>
+                </TouchableOpacity>
 
                 {/* Quick Actions */}
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -353,6 +380,60 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.sm,
         color: COLORS.textSecondary,
         lineHeight: 18,
+    },
+    quizCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.xl,
+        borderRadius: BORDER_RADIUS.xl,
+        marginBottom: SPACING.xxl,
+        ...SHADOWS.glow,
+    },
+    quizLeft: {
+        flex: 1,
+    },
+    quizBadge: {
+        fontSize: 9,
+        fontWeight: '900',
+        color: COLORS.white,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: 2,
+        borderRadius: BORDER_RADIUS.full,
+        alignSelf: 'flex-start',
+        marginBottom: SPACING.sm,
+        letterSpacing: 1,
+        overflow: 'hidden',
+    },
+    quizTitle: {
+        fontSize: FONT_SIZES.xl,
+        fontWeight: '800',
+        color: COLORS.white,
+        marginBottom: SPACING.xs,
+    },
+    quizDesc: {
+        fontSize: FONT_SIZES.sm,
+        color: 'rgba(255,255,255,0.75)',
+        lineHeight: 18,
+        marginBottom: SPACING.md,
+    },
+    quizMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.xs,
+    },
+    quizMetaText: {
+        fontSize: FONT_SIZES.xs,
+        color: 'rgba(255,255,255,0.6)',
+        fontWeight: '600',
+    },
+    quizIconWrap: {
+        width: 70,
+        height: 70,
+        borderRadius: BORDER_RADIUS.xl,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     actionsRow: {
         flexDirection: 'row',

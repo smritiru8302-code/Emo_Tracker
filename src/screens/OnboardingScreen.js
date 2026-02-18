@@ -60,7 +60,7 @@ const OnboardingScreen = ({ navigation }) => {
             <View style={styles.ctaSection}>
                 <GradientButton
                     title="Get Started"
-                    onPress={() => navigation.replace('MainTabs')}
+                    onPress={() => navigation.replace('Login')}
                     icon={<Ionicons name="arrow-forward" size={20} color={COLORS.white} />}
                 />
                 <Text style={styles.disclaimer}>
