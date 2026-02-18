@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
 import MoodBadge, { MOOD_CONFIG } from '../components/MoodBadge';
+import { useAuth } from '../context/AuthContext';
+import { saveMoodEntry } from '../services/dbService';
 
 const MOODS = ['happy', 'good', 'neutral', 'sad', 'stressed', 'anxious'];
 
@@ -30,17 +32,33 @@ const WEEKLY_DATA = [
 ];
 
 const MoodTrackerScreen = () => {
+    const { user } = useAuth();
     const [selectedMood, setSelectedMood] = useState(null);
     const [note, setNote] = useState('');
     const [logged, setLogged] = useState(false);
 
-    const handleLog = () => {
-        if (selectedMood) {
-            setLogged(true);
-            setTimeout(() => setLogged(false), 2000);
-            setSelectedMood(null);
-            setNote('');
+    const handleLog = async () => {
+        if (selectedMood && user) {
+            try {
+                const moodConfig = MOOD_CONFIG[selectedMood];
+                await saveMoodEntry(user.uid, {
+                    mood: selectedMood,
+                    note: note.trim(),
+                    score: moodConfig ? getScoreForMood(selectedMood) : 50,
+                });
+                setLogged(true);
+                setTimeout(() => setLogged(false), 2000);
+                setSelectedMood(null);
+                setNote('');
+            } catch (error) {
+                console.log('Error saving mood:', error);
+            }
         }
+    };
+
+    const getScoreForMood = (mood) => {
+        const scores = { happy: 90, good: 75, neutral: 50, sad: 30, stressed: 25, anxious: 20 };
+        return scores[mood] || 50;
     };
 
     return (

@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GradientButton from '../components/GradientButton';
+import { signUp } from '../services/authService';
 
 const SignupScreen = ({ navigation }) => {
     const [name, setName] = useState('');
@@ -16,6 +17,7 @@ const SignupScreen = ({ navigation }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [agreeTerms, setAgreeTerms] = useState(false);
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
     const validate = () => {
         const errs = {};
@@ -30,9 +32,20 @@ const SignupScreen = ({ navigation }) => {
         return Object.keys(errs).length === 0;
     };
 
-    const handleSignup = () => {
-        if (validate()) {
-            navigation.replace('MainTabs');
+    const handleSignup = async () => {
+        if (!validate()) return;
+        setLoading(true);
+        try {
+            await signUp(email, password, name);
+            // Auth state change in AuthContext will auto-navigate to MainTabs
+        } catch (error) {
+            let msg = 'Signup failed. Please try again.';
+            if (error.code === 'auth/email-already-in-use') msg = 'An account with this email already exists.';
+            else if (error.code === 'auth/weak-password') msg = 'Password is too weak.';
+            else if (error.code === 'auth/invalid-email') msg = 'Invalid email address.';
+            setErrors({ general: msg });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -62,6 +75,12 @@ const SignupScreen = ({ navigation }) => {
                     <View style={styles.headerArea}>
                         <Text style={styles.title}>Create Account</Text>
                         <Text style={styles.subtitle}>Start your mental wellness journey today</Text>
+                        {errors.general && (
+                            <View style={styles.errorBanner}>
+                                <Ionicons name="alert-circle" size={16} color={COLORS.danger} />
+                                <Text style={styles.errorBannerText}>{errors.general}</Text>
+                            </View>
+                        )}
                     </View>
 
                     {/* Form */}
@@ -163,11 +182,11 @@ const SignupScreen = ({ navigation }) => {
 
                         {/* Signup Button */}
                         <GradientButton
-                            title="Create Account"
+                            title={loading ? "Creating Account..." : "Create Account"}
                             onPress={handleSignup}
-                            icon={<Ionicons name="person-add-outline" size={20} color={COLORS.white} />}
+                            icon={!loading && <Ionicons name="person-add-outline" size={20} color={COLORS.white} />}
                             colors={COLORS.gradientSecondary}
-                            style={{ marginTop: SPACING.md }}
+                            style={{ marginTop: SPACING.md, opacity: loading ? 0.7 : 1 }}
                         />
                     </View>
 
@@ -236,6 +255,21 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: FONT_SIZES.md,
         color: COLORS.textSecondary,
+    },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.danger + '15',
+        borderRadius: BORDER_RADIUS.md,
+        padding: SPACING.md,
+        marginTop: SPACING.lg,
+        gap: SPACING.sm,
+    },
+    errorBannerText: {
+        flex: 1,
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.danger,
+        fontWeight: '600',
     },
     form: {
         gap: SPACING.lg,

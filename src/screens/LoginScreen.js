@@ -7,12 +7,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GradientButton from '../components/GradientButton';
+import { signIn } from '../services/authService';
 
 const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
     const validate = () => {
         const errs = {};
@@ -24,9 +26,22 @@ const LoginScreen = ({ navigation }) => {
         return Object.keys(errs).length === 0;
     };
 
-    const handleLogin = () => {
-        if (validate()) {
-            navigation.replace('MainTabs');
+    const handleLogin = async () => {
+        if (!validate()) return;
+        setLoading(true);
+        try {
+            await signIn(email, password);
+            // Auth state change in AuthContext will auto-navigate to MainTabs
+        } catch (error) {
+            let msg = 'Login failed. Please try again.';
+            if (error.code === 'auth/user-not-found') msg = 'No account found with this email.';
+            else if (error.code === 'auth/wrong-password') msg = 'Incorrect password.';
+            else if (error.code === 'auth/invalid-email') msg = 'Invalid email address.';
+            else if (error.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+            else if (error.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+            setErrors({ general: msg });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -57,6 +72,12 @@ const LoginScreen = ({ navigation }) => {
                         </LinearGradient>
                         <Text style={styles.title}>Welcome Back</Text>
                         <Text style={styles.subtitle}>Sign in to continue your wellness journey</Text>
+                        {errors.general && (
+                            <View style={styles.errorBanner}>
+                                <Ionicons name="alert-circle" size={16} color={COLORS.danger} />
+                                <Text style={styles.errorBannerText}>{errors.general}</Text>
+                            </View>
+                        )}
                     </View>
 
                     {/* Form */}
@@ -111,10 +132,10 @@ const LoginScreen = ({ navigation }) => {
 
                         {/* Login Button */}
                         <GradientButton
-                            title="Sign In"
+                            title={loading ? "Signing In..." : "Sign In"}
                             onPress={handleLogin}
-                            icon={<Ionicons name="log-in-outline" size={20} color={COLORS.white} />}
-                            style={{ marginTop: SPACING.md }}
+                            icon={!loading && <Ionicons name="log-in-outline" size={20} color={COLORS.white} />}
+                            style={{ marginTop: SPACING.md, opacity: loading ? 0.7 : 1 }}
                         />
                     </View>
 
@@ -193,6 +214,21 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: FONT_SIZES.md,
         color: COLORS.textSecondary,
+    },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.danger + '15',
+        borderRadius: BORDER_RADIUS.md,
+        padding: SPACING.md,
+        marginTop: SPACING.lg,
+        gap: SPACING.sm,
+    },
+    errorBannerText: {
+        flex: 1,
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.danger,
+        fontWeight: '600',
     },
     form: {
         gap: SPACING.lg,

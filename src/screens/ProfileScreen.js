@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
 import ProgressRing from '../components/ProgressRing';
+import { useAuth } from '../context/AuthContext';
+import { signOutUser } from '../services/authService';
 
 const STATS = [
     { label: 'Total Check-ins', value: '47', icon: 'checkmark-done', color: COLORS.secondary },
@@ -46,6 +48,7 @@ const SETTINGS = [
 ];
 
 const ProfileScreen = () => {
+    const { user, profile } = useAuth();
     const [toggles, setToggles] = useState({
         notifications: true,
         darkMode: true,
@@ -56,6 +59,18 @@ const ProfileScreen = () => {
     const handleToggle = (key) => {
         setToggles(prev => ({ ...prev, [key]: !prev[key] }));
     };
+
+    const handleLogout = async () => {
+        try {
+            await signOutUser();
+        } catch (error) {
+            console.log('Logout error:', error);
+        }
+    };
+
+    const displayName = profile?.name || user?.displayName || 'User';
+    const displayEmail = user?.email || 'user@email.com';
+    const avatarLetter = displayName.charAt(0).toUpperCase();
 
     return (
         <View style={styles.container}>
@@ -68,14 +83,14 @@ const ProfileScreen = () => {
                             colors={COLORS.gradientPrimary}
                             style={styles.avatarGradient}
                         >
-                            <Text style={styles.avatarText}>S</Text>
+                            <Text style={styles.avatarText}>{avatarLetter}</Text>
                         </LinearGradient>
                         <View style={styles.editBadge}>
                             <Ionicons name="camera" size={12} color={COLORS.white} />
                         </View>
                     </View>
-                    <Text style={styles.userName}>Smriti Kumari</Text>
-                    <Text style={styles.userEmail}>smriti@emotracker.io</Text>
+                    <Text style={styles.userName}>{displayName}</Text>
+                    <Text style={styles.userEmail}>{displayEmail}</Text>
                     <View style={styles.memberBadge}>
                         <Ionicons name="shield-checkmark" size={14} color={COLORS.secondary} />
                         <Text style={styles.memberText}>Premium Member</Text>
@@ -161,7 +176,7 @@ const ProfileScreen = () => {
                 ))}
 
                 {/* Logout */}
-                <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8} onPress={handleLogout}>
                     <Ionicons name="log-out" size={20} color={COLORS.danger} />
                     <Text style={styles.logoutText}>Log Out</Text>
                 </TouchableOpacity>

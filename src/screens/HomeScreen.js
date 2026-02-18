@@ -9,6 +9,7 @@ import GlassCard from '../components/GlassCard';
 import GradientButton from '../components/GradientButton';
 import ProgressRing from '../components/ProgressRing';
 import StatCard from '../components/StatCard';
+import { useAuth } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -23,9 +24,11 @@ const MOCK_MOOD_DATA = [
 ];
 
 const HomeScreen = ({ navigation }) => {
+    const { user, profile } = useAuth();
     const today = new Date();
     const greeting = today.getHours() < 12 ? 'Good Morning' : today.getHours() < 17 ? 'Good Afternoon' : 'Good Evening';
     const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const firstName = (profile?.name || user?.displayName || 'there').split(' ')[0];
 
     return (
         <View style={styles.container}>
@@ -37,7 +40,7 @@ const HomeScreen = ({ navigation }) => {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>{greeting} 👋</Text>
+                        <Text style={styles.greeting}>{greeting}, {firstName} 👋</Text>
                         <Text style={styles.date}>{dateStr}</Text>
                     </View>
                     <TouchableOpacity style={styles.notifBtn}>

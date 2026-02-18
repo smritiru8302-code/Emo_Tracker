@@ -8,6 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
 import GradientButton from '../components/GradientButton';
+import { useAuth } from '../context/AuthContext';
+import { saveQuizResult } from '../services/dbService';
 
 const { width } = Dimensions.get('window');
 
@@ -92,9 +94,11 @@ const getStage = (percentage) => {
 };
 
 const QuizScreen = ({ navigation }) => {
+    const { user } = useAuth();
     const [phase, setPhase] = useState('intro'); // intro, quiz, results
     const [currentQ, setCurrentQ] = useState(0);
     const [answers, setAnswers] = useState({});
+    const [resultsSaved, setResultsSaved] = useState(false);
     const progressAnim = useRef(new Animated.Value(0)).current;
 
     const question = QUESTIONS[currentQ];
@@ -196,6 +200,16 @@ const QuizScreen = ({ navigation }) => {
     if (phase === 'results') {
         const { dimScores, overall } = calculateResults();
         const stage = getStage(overall);
+
+        // Save results to Firestore (once)
+        if (!resultsSaved && user) {
+            setResultsSaved(true);
+            saveQuizResult(user.uid, {
+                overall,
+                dimensions: dimScores,
+                stage: stage.stage,
+            }).catch(err => console.log('Error saving quiz result:', err));
+        }
 
         return (
             <View style={styles.container}>
