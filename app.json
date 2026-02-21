@@ -3,9 +3,11 @@
     "name": "Emo Tracker",
     "slug": "emo-tracker",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -24,8 +26,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset",
-      "expo-font"
+      "expo-web-browser"
     ]
   }
 }
