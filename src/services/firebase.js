@@ -1,25 +1,22 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ⚠️ REPLACE with your Firebase project config from Firebase Console
+// Your Firebase project config
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID",
+    apiKey: "AIzaSyCxStfBAjdZK2WiLvm9Yy-z8LtoSIc3S00",
+    authDomain: "emo-tracker-c927e.firebaseapp.com",
+    projectId: "emo-tracker-c927e",
+    storageBucket: "emo-tracker-c927e.firebasestorage.app",
+    messagingSenderId: "189851160007",
+    appId: "1:189851160007:web:c86b8f51c07ccb0eafdde2",
+    measurementId: "G-RX3YH4GQYN",
 };
 
+const isConfigured = true;
+
 const app = initializeApp(firebaseConfig);
-
-// Use AsyncStorage for auth persistence in React Native
-const auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-});
-
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { app, auth, db };
+export { app, auth, db, isConfigured };
