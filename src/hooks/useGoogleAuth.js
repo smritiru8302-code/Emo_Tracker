@@ -2,12 +2,9 @@ import { useEffect } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { firebaseGoogleSignIn } from '../services/authService';
+import { GOOGLE_WEB_CLIENT_ID } from '@env';
 
 WebBrowser.maybeCompleteAuthSession();
-
-// ⚠️ Replace with your Web client ID from Firebase Console
-// Go to: Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration
-const WEB_CLIENT_ID = '189851160007-gf4befcp9mrjb046cc87oi7slsk0v724.apps.googleusercontent.com';
 
 /**
  * Custom hook for Google Sign-In with Expo + Firebase.
@@ -15,7 +12,7 @@ const WEB_CLIENT_ID = '189851160007-gf4befcp9mrjb046cc87oi7slsk0v724.apps.google
  */
 export const useGoogleAuth = () => {
     const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-        clientId: WEB_CLIENT_ID,
+        clientId: GOOGLE_WEB_CLIENT_ID,
     });
 
     useEffect(() => {

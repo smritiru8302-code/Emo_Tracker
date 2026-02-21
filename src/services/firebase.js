@@ -1,22 +1,26 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import {
+    FIREBASE_API_KEY,
+    FIREBASE_AUTH_DOMAIN,
+    FIREBASE_PROJECT_ID,
+    FIREBASE_STORAGE_BUCKET,
+    FIREBASE_MESSAGING_SENDER_ID,
+    FIREBASE_APP_ID,
+    FIREBASE_MEASUREMENT_ID,
+} from '@env';
 
-// Your Firebase project config
 const firebaseConfig = {
-    apiKey: "AIzaSyCxStfBAjdZK2WiLvm9Yy-z8LtoSIc3S00",
-    authDomain: "emo-tracker-c927e.firebaseapp.com",
-    projectId: "emo-tracker-c927e",
-    storageBucket: "emo-tracker-c927e.firebasestorage.app",
-    messagingSenderId: "189851160007",
-    appId: "1:189851160007:web:c86b8f51c07ccb0eafdde2",
-    measurementId: "G-RX3YH4GQYN",
+    apiKey: FIREBASE_API_KEY,
+    authDomain: FIREBASE_AUTH_DOMAIN,
+    projectId: FIREBASE_PROJECT_ID,
+    storageBucket: FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+    appId: FIREBASE_APP_ID,
+    measurementId: FIREBASE_MEASUREMENT_ID,
 };
 
-const isConfigured = true;
-
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-export { app, auth, db, isConfigured };
+export const auth = getAuth(app);
+export const db = getFirestore(app);

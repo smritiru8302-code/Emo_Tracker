@@ -32,7 +32,8 @@
     "react-native-svg": "15.12.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2"
+    "@babel/core": "^7.25.2",
+    "react-native-dotenv": "^3.4.11"
   },
   "private": true
 }
