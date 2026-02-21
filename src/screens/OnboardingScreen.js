@@ -10,12 +10,12 @@ const { width, height } = Dimensions.get('window');
 const OnboardingScreen = ({ navigation }) => {
     return (
         <LinearGradient
-            colors={['#F5F3FF', '#EDE9FE', '#E8E0FF']}
+            colors={['#F5F5EB', '#EDF5EE', '#E2EDE4']}
             style={styles.container}
         >
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
 
-            {/* Decorative circles */}
+            {/* Decorative leaf-like circles */}
             <View style={styles.circle1} />
             <View style={styles.circle2} />
             <View style={styles.circle3} />
@@ -27,11 +27,11 @@ const OnboardingScreen = ({ navigation }) => {
                         colors={COLORS.gradientPrimary}
                         style={styles.logoGradient}
                     >
-                        <Ionicons name="brain" size={48} color={COLORS.white} />
+                        <Ionicons name="leaf" size={48} color={COLORS.white} />
                     </LinearGradient>
                 </View>
                 <Text style={styles.appName}>Emo Tracker</Text>
-                <Text style={styles.tagline}>AI-Powered Mental Wellness</Text>
+                <Text style={styles.tagline}>Your Wellness Companion 🌿</Text>
             </View>
 
             {/* Feature Highlights */}
@@ -44,13 +44,13 @@ const OnboardingScreen = ({ navigation }) => {
                 />
                 <FeatureItem
                     icon="analytics"
-                    color={COLORS.secondary}
+                    color={COLORS.accent}
                     title="Mood Tracking"
                     description="Monitor your emotional well-being daily"
                 />
                 <FeatureItem
                     icon="shield-checkmark"
-                    color={COLORS.accent}
+                    color={COLORS.info}
                     title="Early Detection"
                     description="Identify stress patterns early on"
                 />
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
         width: 300,
         height: 300,
         borderRadius: 150,
-        backgroundColor: COLORS.primary + '08',
+        backgroundColor: COLORS.primary + '10',
         top: -80,
         right: -100,
     },
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200,
         borderRadius: 100,
-        backgroundColor: COLORS.secondary + '06',
+        backgroundColor: COLORS.secondary + '10',
         bottom: 100,
         left: -60,
     },
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
         width: 150,
         height: 150,
         borderRadius: 75,
-        backgroundColor: COLORS.accent + '05',
+        backgroundColor: COLORS.accent + '08',
         top: height * 0.4,
         right: -40,
     },
@@ -150,9 +150,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: SPACING.lg,
-        backgroundColor: COLORS.surface + '80',
+        backgroundColor: COLORS.surface + '90',
         padding: SPACING.lg,
-        borderRadius: BORDER_RADIUS.lg,
+        borderRadius: BORDER_RADIUS.xl,
         borderWidth: 1,
         borderColor: COLORS.cardBorder,
     },

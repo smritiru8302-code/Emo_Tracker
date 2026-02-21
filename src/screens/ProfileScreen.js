@@ -74,7 +74,7 @@ const ProfileScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>

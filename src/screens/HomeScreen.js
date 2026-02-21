@@ -32,7 +32,7 @@ const HomeScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
@@ -148,7 +148,7 @@ const HomeScreen = ({ navigation }) => {
                     onPress={() => navigation.navigate('Quiz')}
                 >
                     <LinearGradient
-                        colors={['#7C5CFC', '#5A3FD4']}
+                        colors={COLORS.gradientPrimary}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.quizCard}
@@ -165,7 +165,7 @@ const HomeScreen = ({ navigation }) => {
                             </View>
                         </View>
                         <View style={styles.quizIconWrap}>
-                            <Ionicons name="brain" size={40} color="rgba(255,255,255,0.25)" />
+                            <Ionicons name="leaf" size={40} color="rgba(255,255,255,0.25)" />
                         </View>
                     </LinearGradient>
                 </TouchableOpacity>

@@ -15,11 +15,11 @@ const { width } = Dimensions.get('window');
 
 // 5 dimensions × 4 questions = 20 questions
 const DIMENSIONS = [
-    { key: 'emotional', label: 'Emotional Stability', icon: 'heart', color: '#FF6B9D' },
-    { key: 'anxiety', label: 'Anxiety Level', icon: 'pulse', color: '#FF9F43' },
-    { key: 'social', label: 'Social Engagement', icon: 'people', color: '#54A0FF' },
-    { key: 'selfPerception', label: 'Self-Perception', icon: 'star', color: '#7C5CFC' },
-    { key: 'resilience', label: 'Resilience', icon: 'shield-checkmark', color: '#00D9A6' },
+    { key: 'emotional', label: 'Emotional Stability', icon: 'heart', color: '#E09B8A' },
+    { key: 'anxiety', label: 'Anxiety Level', icon: 'pulse', color: '#E8B86D' },
+    { key: 'social', label: 'Social Engagement', icon: 'people', color: '#7BB5D3' },
+    { key: 'selfPerception', label: 'Self-Perception', icon: 'star', color: '#6B9B7E' },
+    { key: 'resilience', label: 'Resilience', icon: 'shield-checkmark', color: '#8BB89E' },
 ];
 
 const QUESTIONS = [
@@ -143,11 +143,11 @@ const QuizScreen = ({ navigation }) => {
     if (phase === 'intro') {
         return (
             <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+                <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
                 <ScrollView contentContainerStyle={styles.introContent} showsVerticalScrollIndicator={false}>
                     <View style={styles.introIconWrap}>
                         <LinearGradient colors={COLORS.gradientPrimary} style={styles.introIcon}>
-                            <Ionicons name="brain" size={48} color={COLORS.white} />
+                            <Ionicons name="leaf" size={48} color={COLORS.white} />
                         </LinearGradient>
                     </View>
 
@@ -213,7 +213,7 @@ const QuizScreen = ({ navigation }) => {
 
         return (
             <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+                <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
                 <ScrollView contentContainerStyle={styles.resultContent} showsVerticalScrollIndicator={false}>
                     <Text style={styles.resultHeader}>Your Results</Text>
 
@@ -295,7 +295,7 @@ const QuizScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
 
             {/* Progress Header */}
             <View style={styles.quizHeader}>

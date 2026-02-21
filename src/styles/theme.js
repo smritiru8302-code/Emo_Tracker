@@ -1,47 +1,49 @@
 export const COLORS = {
-    // Core backgrounds — light, airy tones
-    background: '#F5F3FF',
+    // Core backgrounds — warm, natural cream tones
+    background: '#F5F5EB',
     surface: '#FFFFFF',
-    surfaceLight: '#EDE9FE',
+    surfaceLight: '#EDF5EE',
     card: '#FFFFFF',
-    cardBorder: 'rgba(124, 92, 252, 0.10)',
+    cardBorder: 'rgba(107, 155, 126, 0.12)',
 
-    // Accent colors
-    primary: '#7C5CFC',
-    primaryLight: '#9B7FFF',
-    secondary: '#00D9A6',
-    secondaryLight: '#33E8BF',
-    accent: '#FF6B9D',
-    accentWarm: '#FF9F43',
-    info: '#54A0FF',
+    // Accent colors — nature-inspired greens
+    primary: '#6B9B7E',
+    primaryLight: '#8BB89E',
+    primaryDark: '#4A7A5E',
+    secondary: '#A8C5A0',
+    secondaryLight: '#C8DFC2',
+    accent: '#E8B86D',
+    accentWarm: '#F0C987',
+    info: '#7BB5D3',
 
-    // Mood colors
-    moodHappy: '#00D9A6',
-    moodGood: '#7C5CFC',
-    moodNeutral: '#54A0FF',
-    moodSad: '#FF9F43',
-    moodStressed: '#FF6B9D',
-    moodAnxious: '#FF4757',
+    // Mood colors — soft, calming tones
+    moodHappy: '#8BB89E',
+    moodGood: '#A8C5A0',
+    moodNeutral: '#B8CCE0',
+    moodSad: '#E8B86D',
+    moodStressed: '#E09B8A',
+    moodAnxious: '#D4837A',
 
-    // Text — dark text on light backgrounds
-    textPrimary: '#1A1A2E',
-    textSecondary: 'rgba(26, 26, 46, 0.60)',
-    textMuted: 'rgba(26, 26, 46, 0.35)',
+    // Text — warm dark text on light backgrounds
+    textPrimary: '#2D3B2F',
+    textSecondary: 'rgba(45, 59, 47, 0.60)',
+    textMuted: 'rgba(45, 59, 47, 0.35)',
 
     // Utility
-    danger: '#FF4757',
-    success: '#00D9A6',
-    warning: '#FF9F43',
+    danger: '#D4837A',
+    success: '#6B9B7E',
+    warning: '#E8B86D',
     white: '#FFFFFF',
     black: '#000000',
-    overlay: 'rgba(0, 0, 0, 0.15)',
+    overlay: 'rgba(45, 59, 47, 0.12)',
 
     // Gradients
-    gradientPrimary: ['#7C5CFC', '#5A3FD4'],
-    gradientSecondary: ['#00D9A6', '#00B389'],
-    gradientDark: ['#F5F3FF', '#EDE9FE'],
-    gradientCard: ['rgba(124, 92, 252, 0.06)', 'rgba(124, 92, 252, 0.02)'],
-    gradientAccent: ['#FF6B9D', '#FF4757'],
+    gradientPrimary: ['#6B9B7E', '#4A7A5E'],
+    gradientSecondary: ['#A8C5A0', '#8BB89E'],
+    gradientDark: ['#F5F5EB', '#EDF5EE'],
+    gradientCard: ['rgba(107, 155, 126, 0.08)', 'rgba(107, 155, 126, 0.02)'],
+    gradientAccent: ['#E8B86D', '#D4A24A'],
+    gradientWelcome: ['#6B9B7E', '#A8C5A0'],
 };
 
 export const SPACING = {
@@ -76,24 +78,24 @@ export const BORDER_RADIUS = {
 
 export const SHADOWS = {
     card: {
-        shadowColor: '#7C5CFC',
+        shadowColor: '#2D3B2F',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.10,
+        shadowOpacity: 0.06,
         shadowRadius: 12,
-        elevation: 4,
+        elevation: 3,
     },
     glow: {
-        shadowColor: '#7C5CFC',
+        shadowColor: '#6B9B7E',
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 8,
+        shadowOpacity: 0.20,
+        shadowRadius: 16,
+        elevation: 6,
     },
     soft: {
-        shadowColor: '#7C5CFC',
+        shadowColor: '#2D3B2F',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.04,
         shadowRadius: 8,
-        elevation: 3,
+        elevation: 2,
     },
 };

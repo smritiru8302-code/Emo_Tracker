@@ -112,16 +112,16 @@ const ChatScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
 
             {/* Header */}
             <LinearGradient
-                colors={['#EDE9FE', '#F5F3FF']}
+                colors={['#EDF5EE', '#F5F5EB']}
                 style={styles.header}
             >
                 <View style={styles.aiAvatar}>
                     <LinearGradient colors={COLORS.gradientPrimary} style={styles.avatarGradient}>
-                        <Ionicons name="brain" size={22} color={COLORS.white} />
+                        <Ionicons name="leaf" size={22} color={COLORS.white} />
                     </LinearGradient>
                     <View style={styles.onlineDot} />
                 </View>

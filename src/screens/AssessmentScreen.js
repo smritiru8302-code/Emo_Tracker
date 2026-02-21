@@ -87,7 +87,7 @@ const AssessmentScreen = () => {
     if (showResult) {
         return (
             <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+                <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.resultContent}>
                     <Text style={styles.resultTitle}>Assessment Complete</Text>
 
@@ -161,7 +161,7 @@ const AssessmentScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
                 <Text style={styles.title}>Well-being Check</Text>
