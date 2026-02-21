@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import {
     View, Text, StyleSheet, TextInput, TouchableOpacity,
-    StatusBar, KeyboardAvoidingView, Platform, ScrollView,
+    StatusBar, KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GradientButton from '../components/GradientButton';
 import { signIn } from '../services/authService';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 
 const LoginScreen = ({ navigation }) => {
+    const { promptGoogleSignIn } = useGoogleAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -33,12 +35,15 @@ const LoginScreen = ({ navigation }) => {
             await signIn(email, password);
             // Auth state change in AuthContext will auto-navigate to MainTabs
         } catch (error) {
+            console.log('Login error:', error.code, error.message);
             let msg = 'Login failed. Please try again.';
             if (error.code === 'auth/user-not-found') msg = 'No account found with this email.';
             else if (error.code === 'auth/wrong-password') msg = 'Incorrect password.';
             else if (error.code === 'auth/invalid-email') msg = 'Invalid email address.';
             else if (error.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
             else if (error.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+            else if (error.code === 'auth/network-request-failed') msg = 'Network error. Check your internet connection.';
+            else msg = error.message || msg;
             setErrors({ general: msg });
         } finally {
             setLoading(false);
@@ -47,7 +52,7 @@ const LoginScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -68,7 +73,7 @@ const LoginScreen = ({ navigation }) => {
                     {/* Logo */}
                     <View style={styles.logoArea}>
                         <LinearGradient colors={COLORS.gradientPrimary} style={styles.logoIcon}>
-                            <Ionicons name="brain" size={36} color={COLORS.white} />
+                            <Ionicons name="leaf" size={36} color={COLORS.white} />
                         </LinearGradient>
                         <Text style={styles.title}>Welcome Back</Text>
                         <Text style={styles.subtitle}>Sign in to continue your wellness journey</Text>
@@ -148,13 +153,13 @@ const LoginScreen = ({ navigation }) => {
 
                     {/* Social Login */}
                     <View style={styles.socialRow}>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <TouchableOpacity style={styles.socialBtn} onPress={promptGoogleSignIn}>
                             <Ionicons name="logo-google" size={22} color="#EA4335" />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <TouchableOpacity style={styles.socialBtn} onPress={() => Alert.alert('Coming Soon', 'Apple sign-in will be available in a future update.')}>
                             <Ionicons name="logo-apple" size={22} color={COLORS.textPrimary} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <TouchableOpacity style={styles.socialBtn} onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in will be available in a future update.')}>
                             <Ionicons name="logo-facebook" size={22} color="#1877F2" />
                         </TouchableOpacity>
                     </View>

@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import {
     View, Text, StyleSheet, TextInput, TouchableOpacity,
-    StatusBar, KeyboardAvoidingView, Platform, ScrollView,
+    StatusBar, KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GradientButton from '../components/GradientButton';
 import { signUp } from '../services/authService';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 
 const SignupScreen = ({ navigation }) => {
+    const { promptGoogleSignIn } = useGoogleAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -39,10 +41,15 @@ const SignupScreen = ({ navigation }) => {
             await signUp(email, password, name);
             // Auth state change in AuthContext will auto-navigate to MainTabs
         } catch (error) {
+            console.log('Signup error:', error.code, error.message);
             let msg = 'Signup failed. Please try again.';
             if (error.code === 'auth/email-already-in-use') msg = 'An account with this email already exists.';
             else if (error.code === 'auth/weak-password') msg = 'Password is too weak.';
             else if (error.code === 'auth/invalid-email') msg = 'Invalid email address.';
+            else if (error.code === 'auth/operation-not-allowed') msg = 'Email/Password sign-in is not enabled in Firebase Console.';
+            else if (error.code === 'auth/network-request-failed') msg = 'Network error. Check your internet connection.';
+            else msg = error.message || msg;
+            Alert.alert('Signup Error', msg);
             setErrors({ general: msg });
         } finally {
             setLoading(false);
@@ -53,7 +60,7 @@ const SignupScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F3FF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -199,13 +206,13 @@ const SignupScreen = ({ navigation }) => {
 
                     {/* Social Signup */}
                     <View style={styles.socialRow}>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <TouchableOpacity style={styles.socialBtn} onPress={promptGoogleSignIn}>
                             <Ionicons name="logo-google" size={22} color="#EA4335" />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <TouchableOpacity style={styles.socialBtn} onPress={() => Alert.alert('Coming Soon', 'Apple sign-in will be available in a future update.')}>
                             <Ionicons name="logo-apple" size={22} color={COLORS.textPrimary} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn}>
+                        <TouchableOpacity style={styles.socialBtn} onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in will be available in a future update.')}>
                             <Ionicons name="logo-facebook" size={22} color="#1877F2" />
                         </TouchableOpacity>
                     </View>
