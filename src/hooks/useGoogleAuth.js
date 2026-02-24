@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { firebaseGoogleSignIn } from '../services/authService';
-import { GOOGLE_WEB_CLIENT_ID } from '@env';
-
 WebBrowser.maybeCompleteAuthSession();
 
 /**
@@ -11,9 +9,12 @@ WebBrowser.maybeCompleteAuthSession();
  * Returns { promptGoogleSignIn, isLoading }
  */
 export const useGoogleAuth = () => {
-    const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-        clientId: GOOGLE_WEB_CLIENT_ID,
-    });
+    const [request, response, promptAsync] =
+        Google.useIdTokenAuthRequest({
+            expoClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+            webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+            androidClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        });
 
     useEffect(() => {
         if (response?.type === 'success') {
