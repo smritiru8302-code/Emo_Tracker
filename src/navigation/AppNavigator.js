@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getLatestQuizResult } from '../services/dbService';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -30,7 +31,7 @@ const TAB_CONFIG = {
     Profile: { icon: 'person-outline', activeIcon: 'person' },
 };
 
-const TabIcon = ({ route, focused, color, size }) => {
+const TabIcon = ({ route, focused, color }) => {
     const config = TAB_CONFIG[route.name];
     const iconName = focused ? config.activeIcon : config.icon;
 
@@ -50,34 +51,45 @@ const TabIcon = ({ route, focused, color, size }) => {
     return <Ionicons name={iconName} size={22} color={color} />;
 };
 
-const MainTabs = () => {
-    return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => (
-                    <TabIcon route={route} focused={focused} color={color} size={size} />
-                ),
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textMuted,
-                tabBarStyle: styles.tabBar,
-                tabBarLabelStyle: styles.tabLabel,
-                tabBarShowLabel: true,
-                headerShown: false,
-            })}
-        >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Chat" component={ChatScreen} />
-            <Tab.Screen name="Mood" component={MoodTrackerScreen} />
-            <Tab.Screen name="Resources" component={ResourcesScreen} />
-            <Tab.Screen name="Profile" component={ProfileScreen} />
-        </Tab.Navigator>
-    );
-};
+const MainTabs = () => (
+    <Tab.Navigator
+        screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color }) => (
+                <TabIcon route={route} focused={focused} color={color} />
+            ),
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: COLORS.textMuted,
+            tabBarStyle: styles.tabBar,
+            tabBarLabelStyle: styles.tabLabel,
+            headerShown: false,
+        })}
+    >
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Chat" component={ChatScreen} />
+        <Tab.Screen name="Mood" component={MoodTrackerScreen} />
+        <Tab.Screen name="Resources" component={ResourcesScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+);
 
 const AppNavigator = () => {
     const { user, loading } = useAuth();
+    const [hasQuiz, setHasQuiz] = useState(null);
 
-    if (loading) {
+    useEffect(() => {
+        const checkQuiz = async () => {
+            if (user) {
+                const result = await getLatestQuizResult(user.uid);
+                setHasQuiz(!!result);
+            } else {
+                setHasQuiz(null);
+            }
+        };
+
+        checkQuiz();
+    }, [user]);
+
+    if (loading || (user && hasQuiz === null)) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -90,9 +102,12 @@ const AppNavigator = () => {
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
                     <>
+                        {!hasQuiz && (
+                            <Stack.Screen name="Quiz" component={QuizScreen} />
+                        )}
+
                         <Stack.Screen name="MainTabs" component={MainTabs} />
                         <Stack.Screen name="Assessment" component={AssessmentScreen} />
-                        <Stack.Screen name="Quiz" component={QuizScreen} />
                     </>
                 ) : (
                     <>

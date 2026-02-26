@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     StatusBar, Animated, Dimensions,
@@ -139,6 +139,22 @@ const QuizScreen = ({ navigation }) => {
         return { dimScores, overall };
     };
 
+    // Save results to Firestore (once) - MOVED OUTSIDE CONDITIONAL BLOCK
+    useEffect(() => {
+        if (phase === 'results' && user && !resultsSaved) {
+            const { dimScores, overall } = calculateResults();
+            const stage = getStage(overall);
+
+            setResultsSaved(true);
+
+            saveQuizResult(user.uid, {
+                overall,
+                dimensions: dimScores,
+                stage: stage.stage,
+            }).catch(err => console.log('Error saving quiz result:', err));
+        }
+    }, [phase, user, resultsSaved]);
+
     // ─── INTRO PHASE ─────────────────────────────────────
     if (phase === 'intro') {
         return (
@@ -200,16 +216,6 @@ const QuizScreen = ({ navigation }) => {
     if (phase === 'results') {
         const { dimScores, overall } = calculateResults();
         const stage = getStage(overall);
-
-        // Save results to Firestore (once)
-        if (!resultsSaved && user) {
-            setResultsSaved(true);
-            saveQuizResult(user.uid, {
-                overall,
-                dimensions: dimScores,
-                stage: stage.stage,
-            }).catch(err => console.log('Error saving quiz result:', err));
-        }
 
         return (
             <View style={styles.container}>
@@ -277,7 +283,7 @@ const QuizScreen = ({ navigation }) => {
                         />
                         <GradientButton
                             title="Talk to AI"
-                            onPress={() => navigation.navigate('Chat')}
+                            onPress={() => navigation.navigate('MainTabs', { screen: 'Chat' })}
                             icon={<Ionicons name="chatbubble" size={18} color={COLORS.white} />}
                             colors={COLORS.gradientSecondary}
                             style={{ marginTop: SPACING.md }}
