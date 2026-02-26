@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, StatusBar,
+    View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, StatusBar, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,29 +10,90 @@ import GradientButton from '../components/GradientButton';
 import ProgressRing from '../components/ProgressRing';
 import StatCard from '../components/StatCard';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { getUserStats } from '../services/dbService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
-const MOCK_MOOD_DATA = [
-    { day: 'Mon', mood: '😊', score: 80 },
-    { day: 'Tue', mood: '🙂', score: 70 },
-    { day: 'Wed', mood: '😐', score: 50 },
-    { day: 'Thu', mood: '😔', score: 35 },
-    { day: 'Fri', mood: '🙂', score: 65 },
-    { day: 'Sat', mood: '😊', score: 85 },
-    { day: 'Sun', mood: '😊', score: 78 },
-];
+const SCORE_TO_EMOJI = (score) => {
+    if (score >= 80) return '😊';
+    if (score >= 60) return '🙂';
+    if (score >= 40) return '😐';
+    if (score >= 20) return '😔';
+    return '😢';
+};
+
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 const HomeScreen = ({ navigation }) => {
+    const { colors, shadows, isDark } = useTheme();
     const { user, profile } = useAuth();
+    const { t } = useLanguage();
+    const [stats, setStats] = useState(null);
+    const [weeklyData, setWeeklyData] = useState([]);
+    const [loadingStats, setLoadingStats] = useState(true);
+
     const today = new Date();
-    const greeting = today.getHours() < 12 ? 'Good Morning' : today.getHours() < 17 ? 'Good Afternoon' : 'Good Evening';
+    const hour = today.getHours();
+    const greeting = hour < 12 ? t('goodMorning') : hour < 17 ? t('goodAfternoon') : t('goodEvening');
     const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const firstName = (profile?.name || user?.displayName || 'there').split(' ')[0];
 
+    const loadStats = useCallback(async () => {
+        if (!user) return;
+        try {
+            setLoadingStats(true);
+            const s = await getUserStats(user.uid);
+            setStats(s);
+
+            // Build weekly data from recentMoods
+            const dayMap = {};
+            const now = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(now.getDate() - i);
+                const dayKey = DAY_KEYS[d.getDay()];
+                dayMap[`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`] = {
+                    day: t(dayKey),
+                    mood: '',
+                    score: 0,
+                };
+            }
+
+            // Fill in data from actual mood entries
+            (s.recentMoods || []).forEach(m => {
+                const d = new Date(m.timestamp);
+                const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                if (dayMap[key]) {
+                    dayMap[key].score = m.score || 50;
+                    dayMap[key].mood = SCORE_TO_EMOJI(m.score || 50);
+                }
+            });
+
+            setWeeklyData(Object.values(dayMap));
+        } catch (err) {
+            console.log('Error loading stats:', err);
+        } finally {
+            setLoadingStats(false);
+        }
+    }, [user, t]);
+
+    // Reload stats when the screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            loadStats();
+        }, [loadStats])
+    );
+
+    const wellnessScore = stats?.avgScore || 0;
+    const wellnessMsg = wellnessScore >= 70 ? t('wellnessGood') : wellnessScore >= 40 ? t('wellnessOk') : t('wellnessLow');
+    const hasStressPattern = weeklyData.some(d => d.score > 0 && d.score < 40);
+
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
@@ -40,12 +101,14 @@ const HomeScreen = ({ navigation }) => {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>{greeting}, {firstName} 👋</Text>
-                        <Text style={styles.date}>{dateStr}</Text>
+                        <Text style={[styles.greeting, { color: colors.textPrimary }]}>{greeting}, {firstName} 👋</Text>
+                        <Text style={[styles.date, { color: colors.textSecondary }]}>{dateStr}</Text>
                     </View>
-                    <TouchableOpacity style={styles.notifBtn}>
-                        <Ionicons name="notifications-outline" size={24} color={COLORS.textPrimary} />
-                        <View style={styles.notifDot} />
+                    <TouchableOpacity style={[styles.notifBtn, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}>
+                        <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
+                        {(stats?.streak === 0 || hasStressPattern) && (
+                            <View style={[styles.notifDot, { backgroundColor: colors.danger }]} />
+                        )}
                     </TouchableOpacity>
                 </View>
 
@@ -53,20 +116,24 @@ const HomeScreen = ({ navigation }) => {
                 <GlassCard style={styles.wellnessCard}>
                     <View style={styles.wellnessContent}>
                         <View style={styles.wellnessLeft}>
-                            <Text style={styles.wellnessTitle}>Wellness Score</Text>
-                            <Text style={styles.wellnessSubtitle}>
-                                Your mental health is looking good today!
+                            <Text style={[styles.wellnessTitle, { color: colors.textPrimary }]}>{t('wellnessScore')}</Text>
+                            <Text style={[styles.wellnessSubtitle, { color: colors.textSecondary }]}>
+                                {wellnessMsg}
                             </Text>
-                            <View style={styles.wellnessTrend}>
-                                <Ionicons name="trending-up" size={16} color={COLORS.secondary} />
-                                <Text style={styles.trendText}>+12% from last week</Text>
-                            </View>
+                            {stats && stats.totalMoods > 0 && (
+                                <View style={styles.wellnessTrend}>
+                                    <Ionicons name={wellnessScore >= 50 ? "trending-up" : "trending-down"} size={16} color={wellnessScore >= 50 ? colors.secondary : colors.danger} />
+                                    <Text style={[styles.trendText, { color: wellnessScore >= 50 ? colors.secondary : colors.danger }]}>
+                                        {wellnessScore}% {t('fromLastWeek')}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                         <ProgressRing
-                            progress={78}
+                            progress={loadingStats ? 0 : wellnessScore}
                             size={100}
                             strokeWidth={8}
-                            color={COLORS.secondary}
+                            color={colors.secondary}
                             label="Score"
                         />
                     </View>
@@ -76,92 +143,102 @@ const HomeScreen = ({ navigation }) => {
                 <View style={styles.statsRow}>
                     <StatCard
                         icon="flame"
-                        iconColor={COLORS.accentWarm}
-                        value="7"
-                        label="Day Streak"
+                        iconColor={colors.accentWarm}
+                        value={loadingStats ? '—' : String(stats?.streak || 0)}
+                        label={t('dayStreak')}
                     />
                     <StatCard
                         icon="checkmark-circle"
-                        iconColor={COLORS.secondary}
-                        value="23"
-                        label="Check-ins"
+                        iconColor={colors.secondary}
+                        value={loadingStats ? '—' : String(stats?.totalMoods || 0)}
+                        label={t('checkIns')}
                     />
                     <StatCard
                         icon="alert-circle"
-                        iconColor={COLORS.accent}
-                        value="2"
-                        label="Alerts"
+                        iconColor={colors.accent}
+                        value={loadingStats ? '—' : String(stats?.totalAssessments || 0)}
+                        label={t('assessments')}
                     />
                 </View>
 
                 {/* Weekly Mood Chart */}
                 <GlassCard style={styles.chartCard}>
                     <View style={styles.chartHeader}>
-                        <Text style={styles.sectionTitle}>Weekly Mood</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.seeAll}>See All</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('weeklyMood')}</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Mood')}>
+                            <Text style={[styles.seeAll, { color: colors.primary }]}>{t('seeAll')}</Text>
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.chartContainer}>
-                        {MOCK_MOOD_DATA.map((item, index) => (
-                            <View key={index} style={styles.chartBar}>
-                                <Text style={styles.moodEmoji}>{item.mood}</Text>
-                                <View style={styles.barBg}>
-                                    <LinearGradient
-                                        colors={item.score > 60 ? COLORS.gradientSecondary : item.score > 40 ? [COLORS.info, COLORS.info] : COLORS.gradientAccent}
-                                        style={[styles.barFill, { height: `${item.score}%` }]}
-                                    />
+                    {loadingStats ? (
+                        <ActivityIndicator color={colors.primary} style={{ height: 140 }} />
+                    ) : weeklyData.every(d => d.score === 0) ? (
+                        <View style={{ height: 140, justifyContent: 'center', alignItems: 'center' }}>
+                            <Ionicons name="analytics-outline" size={32} color={colors.textMuted} />
+                            <Text style={[styles.dayLabel, { color: colors.textMuted, marginTop: SPACING.sm }]}>{t('noMoodData')}</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.chartContainer}>
+                            {weeklyData.map((item, index) => (
+                                <View key={index} style={styles.chartBar}>
+                                    <Text style={styles.moodEmoji}>{item.mood || '·'}</Text>
+                                    <View style={[styles.barBg, { backgroundColor: colors.surfaceLight }]}>
+                                        <LinearGradient
+                                            colors={item.score > 60 ? colors.gradientSecondary : item.score > 40 ? [colors.info, colors.info] : item.score > 0 ? colors.gradientAccent : ['transparent', 'transparent']}
+                                            style={[styles.barFill, { height: `${item.score}%` }]}
+                                        />
+                                    </View>
+                                    <Text style={[styles.dayLabel, { color: colors.textMuted }]}>{item.day}</Text>
                                 </View>
-                                <Text style={styles.dayLabel}>{item.day}</Text>
-                            </View>
-                        ))}
-                    </View>
+                            ))}
+                        </View>
+                    )}
                 </GlassCard>
 
-                {/* Alert Card */}
-                <GlassCard
-                    style={styles.alertCard}
-                    gradientColors={['rgba(255,71,87,0.12)', 'rgba(255,71,87,0.04)']}
-                >
-                    <View style={styles.alertContent}>
-                        <View style={styles.alertIcon}>
-                            <Ionicons name="warning" size={24} color={COLORS.danger} />
+                {/* Alert Card - shows only if stress detected */}
+                {hasStressPattern && (
+                    <GlassCard
+                        style={[styles.alertCard, { borderColor: colors.danger + '20' }]}
+                        gradientColors={isDark ? ['rgba(232,168,152,0.15)', 'rgba(232,168,152,0.05)'] : ['rgba(255,71,87,0.12)', 'rgba(255,71,87,0.04)']}
+                    >
+                        <View style={styles.alertContent}>
+                            <View style={[styles.alertIcon, { backgroundColor: colors.danger + '15' }]}>
+                                <Ionicons name="warning" size={24} color={colors.danger} />
+                            </View>
+                            <View style={styles.alertText}>
+                                <Text style={[styles.alertTitle, { color: colors.danger }]}>{t('stressDetected')}</Text>
+                                <Text style={[styles.alertDesc, { color: colors.textSecondary }]}>
+                                    {t('stressMessage')}
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.alertText}>
-                            <Text style={styles.alertTitle}>Stress Pattern Detected</Text>
-                            <Text style={styles.alertDesc}>
-                                We noticed elevated stress levels mid-week. Consider taking a break.
-                            </Text>
-                        </View>
-                    </View>
-                    <GradientButton
-                        title="Talk to AI"
-                        small
-                        colors={COLORS.gradientAccent}
-                        onPress={() => navigation.navigate('Chat')}
-                        icon={<Ionicons name="chatbubble" size={14} color={COLORS.white} />}
-                    />
-                </GlassCard>
+                        <GradientButton
+                            title={t('talkToAi')}
+                            small
+                            colors={colors.gradientAccent}
+                            onPress={() => navigation.navigate('Chat')}
+                            icon={<Ionicons name="chatbubble" size={14} color={colors.white} />}
+                        />
+                    </GlassCard>
+                )}
+
                 {/* Mental Health Quiz Card */}
                 <TouchableOpacity
                     activeOpacity={0.85}
                     onPress={() => navigation.navigate('Quiz')}
                 >
                     <LinearGradient
-                        colors={COLORS.gradientPrimary}
+                        colors={colors.gradientPrimary}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
-                        style={styles.quizCard}
+                        style={[styles.quizCard, shadows.glow]}
                     >
                         <View style={styles.quizLeft}>
-                            <Text style={styles.quizBadge}>NEW</Text>
-                            <Text style={styles.quizTitle}>Mental Health Quiz</Text>
-                            <Text style={styles.quizDesc}>
-                                Discover your mental wellness stage across 5 dimensions
-                            </Text>
+                            <Text style={[styles.quizBadge, { color: colors.white }]}>{t('newBadge')}</Text>
+                            <Text style={[styles.quizTitle, { color: colors.white }]}>{t('mentalHealthQuiz')}</Text>
+                            <Text style={styles.quizDesc}>{t('quizDescription')}</Text>
                             <View style={styles.quizMeta}>
                                 <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.7)" />
-                                <Text style={styles.quizMetaText}>3-5 min • 20 questions</Text>
+                                <Text style={styles.quizMetaText}>{t('quizMeta')}</Text>
                             </View>
                         </View>
                         <View style={styles.quizIconWrap}>
@@ -171,30 +248,30 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
 
                 {/* Quick Actions */}
-                <Text style={styles.sectionTitle}>Quick Actions</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('quickActions')}</Text>
                 <View style={styles.actionsRow}>
                     <QuickAction
                         icon="chatbubble-ellipses"
-                        label="Chat"
-                        color={COLORS.primary}
+                        label={t('chat')}
+                        color={colors.primary}
                         onPress={() => navigation.navigate('Chat')}
                     />
                     <QuickAction
                         icon="happy"
-                        label="Log Mood"
-                        color={COLORS.secondary}
+                        label={t('logMood')}
+                        color={colors.secondary}
                         onPress={() => navigation.navigate('Mood')}
                     />
                     <QuickAction
                         icon="clipboard"
-                        label="Survey"
-                        color={COLORS.accentWarm}
+                        label={t('survey')}
+                        color={colors.accentWarm}
                         onPress={() => navigation.navigate('Assessment')}
                     />
                     <QuickAction
                         icon="library"
-                        label="Resources"
-                        color={COLORS.info}
+                        label={t('resources')}
+                        color={colors.info}
                         onPress={() => navigation.navigate('Resources')}
                     />
                 </View>
@@ -205,17 +282,20 @@ const HomeScreen = ({ navigation }) => {
     );
 };
 
-const QuickAction = ({ icon, label, color, onPress }) => (
-    <TouchableOpacity style={styles.actionItem} onPress={onPress} activeOpacity={0.7}>
-        <LinearGradient
-            colors={[color + '20', color + '08']}
-            style={styles.actionGradient}
-        >
-            <Ionicons name={icon} size={26} color={color} />
-        </LinearGradient>
-        <Text style={styles.actionLabel}>{label}</Text>
-    </TouchableOpacity>
-);
+const QuickAction = ({ icon, label, color, onPress }) => {
+    const { colors } = useTheme();
+    return (
+        <TouchableOpacity style={styles.actionItem} onPress={onPress} activeOpacity={0.7}>
+            <LinearGradient
+                colors={[color + '20', color + '08']}
+                style={[styles.actionGradient, { borderColor: colors.cardBorder }]}
+            >
+                <Ionicons name={icon} size={26} color={color} />
+            </LinearGradient>
+            <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>{label}</Text>
+        </TouchableOpacity>
+    );
+};
 
 const styles = StyleSheet.create({
     container: {

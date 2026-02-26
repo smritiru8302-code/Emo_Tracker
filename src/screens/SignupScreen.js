@@ -9,8 +9,12 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/t
 import GradientButton from '../components/GradientButton';
 import { signUp } from '../services/authService';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const SignupScreen = ({ navigation }) => {
+    const { colors, shadows } = useTheme();
+    const { t } = useLanguage();
     const { promptGoogleSignIn } = useGoogleAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -23,13 +27,13 @@ const SignupScreen = ({ navigation }) => {
 
     const validate = () => {
         const errs = {};
-        if (!name.trim()) errs.name = 'Name is required';
-        if (!email.trim()) errs.email = 'Email is required';
-        else if (!/\S+@\S+\.\S+/.test(email)) errs.email = 'Enter a valid email';
-        if (!password) errs.password = 'Password is required';
-        else if (password.length < 6) errs.password = 'Minimum 6 characters';
-        if (password !== confirmPassword) errs.confirm = 'Passwords do not match';
-        if (!agreeTerms) errs.terms = 'You must agree to the terms';
+        if (!name.trim()) errs.name = t('nameRequired');
+        if (!email.trim()) errs.email = t('emailRequired');
+        else if (!/\S+@\S+\.\S+/.test(email)) errs.email = t('invalidEmail');
+        if (!password) errs.password = t('passwordRequired');
+        else if (password.length < 6) errs.password = t('passwordMin');
+        if (password !== confirmPassword) errs.confirm = t('passwordsMismatch');
+        if (!agreeTerms) errs.terms = t('agreeTermsRequired');
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
@@ -42,14 +46,14 @@ const SignupScreen = ({ navigation }) => {
             // Auth state change in AuthContext will auto-navigate to MainTabs
         } catch (error) {
             console.log('Signup error:', error.code, error.message);
-            let msg = 'Signup failed. Please try again.';
-            if (error.code === 'auth/email-already-in-use') msg = 'An account with this email already exists.';
-            else if (error.code === 'auth/weak-password') msg = 'Password is too weak.';
-            else if (error.code === 'auth/invalid-email') msg = 'Invalid email address.';
-            else if (error.code === 'auth/operation-not-allowed') msg = 'Email/Password sign-in is not enabled in Firebase Console.';
-            else if (error.code === 'auth/network-request-failed') msg = 'Network error. Check your internet connection.';
+            let msg = t('signupFailed');
+            if (error.code === 'auth/email-already-in-use') msg = t('emailInUse');
+            else if (error.code === 'auth/weak-password') msg = t('weakPassword');
+            else if (error.code === 'auth/invalid-email') msg = t('invalidEmailAuth');
+            else if (error.code === 'auth/operation-not-allowed') msg = t('operationNotAllowed');
+            else if (error.code === 'auth/network-request-failed') msg = t('networkError');
             else msg = error.message || msg;
-            Alert.alert('Signup Error', msg);
+            Alert.alert(t('error'), msg);
             setErrors({ general: msg });
         } finally {
             setLoading(false);
@@ -59,8 +63,8 @@ const SignupScreen = ({ navigation }) => {
     const clearError = (field) => setErrors(e => ({ ...e, [field]: null }));
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -72,20 +76,20 @@ const SignupScreen = ({ navigation }) => {
                 >
                     {/* Back Button */}
                     <TouchableOpacity
-                        style={styles.backBtn}
+                        style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}
                         onPress={() => navigation.goBack()}
                     >
-                        <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+                        <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
                     </TouchableOpacity>
 
                     {/* Header */}
                     <View style={styles.headerArea}>
-                        <Text style={styles.title}>Create Account</Text>
-                        <Text style={styles.subtitle}>Start your mental wellness journey today</Text>
+                        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('createAccount')}</Text>
+                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('signUpSubtitle')}</Text>
                         {errors.general && (
-                            <View style={styles.errorBanner}>
-                                <Ionicons name="alert-circle" size={16} color={COLORS.danger} />
-                                <Text style={styles.errorBannerText}>{errors.general}</Text>
+                            <View style={[styles.errorBanner, { backgroundColor: colors.danger + '15' }]}>
+                                <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                                <Text style={[styles.errorBannerText, { color: colors.danger }]}>{errors.general}</Text>
                             </View>
                         )}
                     </View>
@@ -94,79 +98,95 @@ const SignupScreen = ({ navigation }) => {
                     <View style={styles.form}>
                         {/* Name */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Full Name</Text>
-                            <View style={[styles.inputWrap, errors.name && styles.inputError]}>
-                                <Ionicons name="person-outline" size={20} color={COLORS.textMuted} />
+                            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('fullName')}</Text>
+                            <View style={[
+                                styles.inputWrap,
+                                { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+                                errors.name && { borderColor: colors.danger + '80' }
+                            ]}>
+                                <Ionicons name="person-outline" size={20} color={colors.textMuted} />
                                 <TextInput
-                                    style={styles.input}
-                                    placeholder="John Doe"
-                                    placeholderTextColor={COLORS.textMuted}
+                                    style={[styles.input, { color: colors.textPrimary }]}
+                                    placeholder={t('namePlaceholder')}
+                                    placeholderTextColor={colors.textMuted}
                                     value={name}
-                                    onChangeText={(t) => { setName(t); clearError('name'); }}
+                                    onChangeText={(t_) => { setName(t_); clearError('name'); }}
                                     autoCapitalize="words"
                                 />
                             </View>
-                            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+                            {errors.name && <Text style={[styles.errorText, { color: colors.danger }]}>{errors.name}</Text>}
                         </View>
 
                         {/* Email */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Email</Text>
-                            <View style={[styles.inputWrap, errors.email && styles.inputError]}>
-                                <Ionicons name="mail-outline" size={20} color={COLORS.textMuted} />
+                            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('email')}</Text>
+                            <View style={[
+                                styles.inputWrap,
+                                { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+                                errors.email && { borderColor: colors.danger + '80' }
+                            ]}>
+                                <Ionicons name="mail-outline" size={20} color={colors.textMuted} />
                                 <TextInput
-                                    style={styles.input}
-                                    placeholder="you@example.com"
-                                    placeholderTextColor={COLORS.textMuted}
+                                    style={[styles.input, { color: colors.textPrimary }]}
+                                    placeholder={t('emailPlaceholder')}
+                                    placeholderTextColor={colors.textMuted}
                                     value={email}
-                                    onChangeText={(t) => { setEmail(t); clearError('email'); }}
+                                    onChangeText={(t_) => { setEmail(t_); clearError('email'); }}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     autoCorrect={false}
                                 />
                             </View>
-                            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+                            {errors.email && <Text style={[styles.errorText, { color: colors.danger }]}>{errors.email}</Text>}
                         </View>
 
                         {/* Password */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Password</Text>
-                            <View style={[styles.inputWrap, errors.password && styles.inputError]}>
-                                <Ionicons name="lock-closed-outline" size={20} color={COLORS.textMuted} />
+                            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('password')}</Text>
+                            <View style={[
+                                styles.inputWrap,
+                                { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+                                errors.password && { borderColor: colors.danger + '80' }
+                            ]}>
+                                <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
                                 <TextInput
-                                    style={styles.input}
-                                    placeholder="Minimum 6 characters"
-                                    placeholderTextColor={COLORS.textMuted}
+                                    style={[styles.input, { color: colors.textPrimary }]}
+                                    placeholder={t('passwordPlaceholder')}
+                                    placeholderTextColor={colors.textMuted}
                                     value={password}
-                                    onChangeText={(t) => { setPassword(t); clearError('password'); }}
+                                    onChangeText={(t_) => { setPassword(t_); clearError('password'); }}
                                     secureTextEntry={!showPassword}
                                 />
                                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                                     <Ionicons
                                         name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                                         size={20}
-                                        color={COLORS.textMuted}
+                                        color={colors.textMuted}
                                     />
                                 </TouchableOpacity>
                             </View>
-                            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+                            {errors.password && <Text style={[styles.errorText, { color: colors.danger }]}>{errors.password}</Text>}
                         </View>
 
                         {/* Confirm Password */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Confirm Password</Text>
-                            <View style={[styles.inputWrap, errors.confirm && styles.inputError]}>
-                                <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.textMuted} />
+                            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('confirmPassword')}</Text>
+                            <View style={[
+                                styles.inputWrap,
+                                { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+                                errors.confirm && { borderColor: colors.danger + '80' }
+                            ]}>
+                                <Ionicons name="shield-checkmark-outline" size={20} color={colors.textMuted} />
                                 <TextInput
-                                    style={styles.input}
-                                    placeholder="Re-enter password"
-                                    placeholderTextColor={COLORS.textMuted}
+                                    style={[styles.input, { color: colors.textPrimary }]}
+                                    placeholder={t('confirmPasswordPlaceholder')}
+                                    placeholderTextColor={colors.textMuted}
                                     value={confirmPassword}
-                                    onChangeText={(t) => { setConfirmPassword(t); clearError('confirm'); }}
+                                    onChangeText={(t_) => { setConfirmPassword(t_); clearError('confirm'); }}
                                     secureTextEntry={!showPassword}
                                 />
                             </View>
-                            {errors.confirm && <Text style={styles.errorText}>{errors.confirm}</Text>}
+                            {errors.confirm && <Text style={[styles.errorText, { color: colors.danger }]}>{errors.confirm}</Text>}
                         </View>
 
                         {/* Terms Checkbox */}
@@ -175,53 +195,57 @@ const SignupScreen = ({ navigation }) => {
                             onPress={() => { setAgreeTerms(!agreeTerms); clearError('terms'); }}
                             activeOpacity={0.7}
                         >
-                            <View style={[styles.checkbox, agreeTerms && styles.checkboxChecked]}>
-                                {agreeTerms && <Ionicons name="checkmark" size={14} color={COLORS.white} />}
+                            <View style={[
+                                styles.checkbox,
+                                { borderColor: colors.cardBorder },
+                                agreeTerms && { backgroundColor: colors.primary, borderColor: colors.primary }
+                            ]}>
+                                {agreeTerms && <Ionicons name="checkmark" size={14} color={colors.white} />}
                             </View>
-                            <Text style={styles.termsText}>
-                                I agree to the{' '}
-                                <Text style={styles.termsLink}>Terms of Service</Text>
-                                {' '}and{' '}
-                                <Text style={styles.termsLink}>Privacy Policy</Text>
+                            <Text style={[styles.termsText, { color: colors.textSecondary }]}>
+                                {t('agreeTerms')}
+                                <Text style={[styles.termsLink, { color: colors.primary }]}>{t('termsOfService')}</Text>
+                                {t('and')}
+                                <Text style={[styles.termsLink, { color: colors.primary }]}>{t('privacyPolicy')}</Text>
                             </Text>
                         </TouchableOpacity>
-                        {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
+                        {errors.terms && <Text style={[styles.errorText, { color: colors.danger }]}>{errors.terms}</Text>}
 
                         {/* Signup Button */}
                         <GradientButton
-                            title={loading ? "Creating Account..." : "Create Account"}
+                            title={loading ? t('creatingAccount') : t('createAccount')}
                             onPress={handleSignup}
-                            icon={!loading && <Ionicons name="person-add-outline" size={20} color={COLORS.white} />}
-                            colors={COLORS.gradientSecondary}
+                            icon={!loading && <Ionicons name="person-add-outline" size={20} color={colors.white} />}
+                            colors={colors.gradientSecondary}
                             style={{ marginTop: SPACING.md, opacity: loading ? 0.7 : 1 }}
                         />
                     </View>
 
                     {/* Divider */}
                     <View style={styles.divider}>
-                        <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>or sign up with</Text>
-                        <View style={styles.dividerLine} />
+                        <View style={[styles.dividerLine, { backgroundColor: colors.cardBorder }]} />
+                        <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('orSignUpWith')}</Text>
+                        <View style={[styles.dividerLine, { backgroundColor: colors.cardBorder }]} />
                     </View>
 
                     {/* Social Signup */}
                     <View style={styles.socialRow}>
-                        <TouchableOpacity style={styles.socialBtn} onPress={promptGoogleSignIn}>
+                        <TouchableOpacity style={[styles.socialBtn, { backgroundColor: colors.surface, borderColor: colors.cardBorder }, shadows.soft]} onPress={promptGoogleSignIn}>
                             <Ionicons name="logo-google" size={22} color="#EA4335" />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn} onPress={() => Alert.alert('Coming Soon', 'Apple sign-in will be available in a future update.')}>
-                            <Ionicons name="logo-apple" size={22} color={COLORS.textPrimary} />
+                        <TouchableOpacity style={[styles.socialBtn, { backgroundColor: colors.surface, borderColor: colors.cardBorder }, shadows.soft]} onPress={() => Alert.alert(t('comingSoon'), 'Apple sign-in will be available in a future update.')}>
+                            <Ionicons name="logo-apple" size={22} color={colors.textPrimary} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.socialBtn} onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in will be available in a future update.')}>
+                        <TouchableOpacity style={[styles.socialBtn, { backgroundColor: colors.surface, borderColor: colors.cardBorder }, shadows.soft]} onPress={() => Alert.alert(t('comingSoon'), 'Facebook sign-in will be available in a future update.')}>
                             <Ionicons name="logo-facebook" size={22} color="#1877F2" />
                         </TouchableOpacity>
                     </View>
 
                     {/* Switch to Login */}
                     <View style={styles.switchRow}>
-                        <Text style={styles.switchText}>Already have an account? </Text>
+                        <Text style={[styles.switchText, { color: colors.textSecondary }]}>{t('alreadyHaveAccount')}</Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text style={styles.switchLink}>Sign In</Text>
+                            <Text style={[styles.switchLink, { color: colors.primary }]}>{t('login')}</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -301,9 +325,6 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.md,
         gap: SPACING.md,
     },
-    inputError: {
-        borderColor: COLORS.danger + '80',
-    },
     input: {
         flex: 1,
         fontSize: FONT_SIZES.md,
@@ -328,10 +349,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 1,
-    },
-    checkboxChecked: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
     },
     termsText: {
         flex: 1,

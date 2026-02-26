@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, BORDER_RADIUS, SHADOWS, SPACING } from '../styles/theme';
+import { BORDER_RADIUS, SPACING } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const GlassCard = ({ children, style, gradientColors, noPadding }) => {
+    const { colors, shadows } = useTheme();
+
     return (
-        <View style={[styles.container, style]}>
+        <View style={[styles.container, { borderColor: colors.cardBorder, ...shadows.card }, style]}>
             <LinearGradient
-                colors={gradientColors || COLORS.gradientCard}
+                colors={gradientColors || colors.gradientCard}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.gradient, noPadding ? null : styles.padding]}
@@ -22,9 +25,7 @@ const styles = StyleSheet.create({
     container: {
         borderRadius: BORDER_RADIUS.xl,
         borderWidth: 1,
-        borderColor: COLORS.cardBorder,
         overflow: 'hidden',
-        ...SHADOWS.card,
     },
     gradient: {
         borderRadius: BORDER_RADIUS.xl - 1,

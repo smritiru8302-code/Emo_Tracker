@@ -1,18 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { COLORS, FONT_SIZES, SPACING } from '../styles/theme';
+import { FONT_SIZES, SPACING } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const ProgressRing = ({ progress = 75, size = 120, strokeWidth = 10, color, label }) => {
+    const { colors } = useTheme();
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (progress / 100) * circumference;
-    const ringColor = color || COLORS.primary;
+    const ringColor = color || colors.primary;
 
     return (
         <View style={styles.container}>
             <Svg width={size} height={size} style={styles.svg}>
-                {/* Background circle */}
                 <Circle
                     cx={size / 2}
                     cy={size / 2}
@@ -21,7 +22,6 @@ const ProgressRing = ({ progress = 75, size = 120, strokeWidth = 10, color, labe
                     strokeWidth={strokeWidth}
                     fill="transparent"
                 />
-                {/* Progress circle */}
                 <Circle
                     cx={size / 2}
                     cy={size / 2}
@@ -38,7 +38,7 @@ const ProgressRing = ({ progress = 75, size = 120, strokeWidth = 10, color, labe
             </Svg>
             <View style={[styles.centerContent, { width: size, height: size }]}>
                 <Text style={[styles.value, { color: ringColor }]}>{progress}%</Text>
-                {label && <Text style={styles.label}>{label}</Text>}
+                {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
             </View>
         </View>
     );
@@ -63,7 +63,6 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: FONT_SIZES.xs,
-        color: COLORS.textSecondary,
         marginTop: SPACING.xs,
         fontWeight: '500',
     },

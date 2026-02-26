@@ -1,17 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, BORDER_RADIUS, SPACING, FONT_SIZES } from '../styles/theme';
-
-const MOOD_CONFIG = {
-    happy: { emoji: '😊', color: COLORS.moodHappy, label: 'Happy' },
-    good: { emoji: '🙂', color: COLORS.moodGood, label: 'Good' },
-    neutral: { emoji: '😐', color: COLORS.moodNeutral, label: 'Neutral' },
-    sad: { emoji: '😔', color: COLORS.moodSad, label: 'Sad' },
-    stressed: { emoji: '😰', color: COLORS.moodStressed, label: 'Stressed' },
-    anxious: { emoji: '😟', color: COLORS.moodAnxious, label: 'Anxious' },
-};
+import { BORDER_RADIUS, SPACING, FONT_SIZES } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const MoodBadge = ({ mood, size = 'md', showLabel = true }) => {
+    const { colors } = useTheme();
+    const MOOD_CONFIG = getMoodConfig(colors);
+
     const config = MOOD_CONFIG[mood] || MOOD_CONFIG.neutral;
     const isSmall = size === 'sm';
     const isLarge = size === 'lg';
@@ -41,7 +36,15 @@ const MoodBadge = ({ mood, size = 'md', showLabel = true }) => {
     );
 };
 
-export { MOOD_CONFIG };
+// Export a function to get mood config with theme colors
+export const getMoodConfig = (colors) => ({
+    happy: { emoji: '😊', color: colors.moodHappy, label: 'Happy' },
+    good: { emoji: '🙂', color: colors.moodGood, label: 'Good' },
+    neutral: { emoji: '😐', color: colors.moodNeutral, label: 'Neutral' },
+    sad: { emoji: '😔', color: colors.moodSad, label: 'Sad' },
+    stressed: { emoji: '😰', color: colors.moodStressed, label: 'Stressed' },
+    anxious: { emoji: '😟', color: colors.moodAnxious, label: 'Anxious' },
+});
 
 const styles = StyleSheet.create({
     container: {

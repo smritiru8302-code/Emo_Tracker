@@ -1,16 +1,19 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, BORDER_RADIUS, FONT_SIZES, SPACING, SHADOWS } from '../styles/theme';
+import { BORDER_RADIUS, FONT_SIZES, SPACING } from '../styles/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const GradientButton = ({ title, onPress, colors, style, textStyle, icon, small }) => {
+    const { colors: themeColors, shadows } = useTheme();
+
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={style}>
             <LinearGradient
-                colors={colors || COLORS.gradientPrimary}
+                colors={colors || themeColors.gradientPrimary}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={[styles.gradient, small && styles.small, SHADOWS.glow]}
+                style={[styles.gradient, small && styles.small, shadows.glow]}
             >
                 {icon && icon}
                 <Text style={[styles.text, small && styles.smallText, textStyle]}>
@@ -37,7 +40,7 @@ const styles = StyleSheet.create({
         borderRadius: BORDER_RADIUS.md,
     },
     text: {
-        color: COLORS.white,
+        color: '#FFFFFF',
         fontSize: FONT_SIZES.lg,
         fontWeight: '700',
         letterSpacing: 0.5,

@@ -1,13 +1,19 @@
+<<<<<<< Updated upstream
 import React, { useEffect, useState } from 'react';
 import { getLatestQuizResult } from '../services/dbService';
 import { NavigationContainer } from '@react-navigation/native';
+=======
+import React from 'react';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+>>>>>>> Stashed changes
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
+import { BORDER_RADIUS } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -31,7 +37,12 @@ const TAB_CONFIG = {
     Profile: { icon: 'person-outline', activeIcon: 'person' },
 };
 
+<<<<<<< Updated upstream
 const TabIcon = ({ route, focused, color }) => {
+=======
+const TabIcon = ({ route, focused, color, size }) => {
+    const { colors, shadows } = useTheme();
+>>>>>>> Stashed changes
     const config = TAB_CONFIG[route.name];
     const iconName = focused ? config.activeIcon : config.icon;
 
@@ -39,10 +50,10 @@ const TabIcon = ({ route, focused, color }) => {
         return (
             <View style={styles.activeTabIcon}>
                 <LinearGradient
-                    colors={COLORS.gradientPrimary}
-                    style={styles.activeTabGradient}
+                    colors={colors.gradientPrimary}
+                    style={[styles.activeTabGradient, shadows.glow]}
                 >
-                    <Ionicons name={iconName} size={20} color={COLORS.white} />
+                    <Ionicons name={iconName} size={20} color="#FFFFFF" />
                 </LinearGradient>
             </View>
         );
@@ -51,6 +62,7 @@ const TabIcon = ({ route, focused, color }) => {
     return <Ionicons name={iconName} size={22} color={color} />;
 };
 
+<<<<<<< Updated upstream
 const MainTabs = () => (
     <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -75,6 +87,45 @@ const MainTabs = () => (
 const AppNavigator = () => {
     const { user, loading } = useAuth();
     const [hasQuiz, setHasQuiz] = useState(null);
+=======
+const MainTabs = () => {
+    const { colors, shadows } = useTheme();
+
+    return (
+        <Tab.Navigator
+            screenOptions={({ route }) => ({
+                tabBarIcon: ({ focused, color, size }) => (
+                    <TabIcon route={route} focused={focused} color={color} size={size} />
+                ),
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textMuted,
+                tabBarStyle: {
+                    backgroundColor: colors.surface,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.cardBorder,
+                    height: 70,
+                    paddingBottom: 10,
+                    paddingTop: 8,
+                    ...shadows.soft,
+                },
+                tabBarLabelStyle: styles.tabLabel,
+                tabBarShowLabel: true,
+                headerShown: false,
+            })}
+        >
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Chat" component={ChatScreen} />
+            <Tab.Screen name="Mood" component={MoodTrackerScreen} />
+            <Tab.Screen name="Resources" component={ResourcesScreen} />
+            <Tab.Screen name="Profile" component={ProfileScreen} />
+        </Tab.Navigator>
+    );
+};
+
+const AppNavigator = () => {
+    const { user, loading } = useAuth();
+    const { colors, isDark } = useTheme();
+>>>>>>> Stashed changes
 
     useEffect(() => {
         const checkQuiz = async () => {
@@ -91,14 +142,27 @@ const AppNavigator = () => {
 
     if (loading || (user && hasQuiz === null)) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
 
+    const navTheme = {
+        ...(isDark ? DarkTheme : DefaultTheme),
+        colors: {
+            ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+            primary: colors.primary,
+            background: colors.background,
+            card: colors.surface,
+            text: colors.textPrimary,
+            border: colors.cardBorder,
+            notification: colors.accent,
+        },
+    };
+
     return (
-        <NavigationContainer>
+        <NavigationContainer theme={navTheme}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
                     <>
@@ -126,16 +190,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.background,
-    },
-    tabBar: {
-        backgroundColor: COLORS.surface,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.cardBorder,
-        height: 70,
-        paddingBottom: 10,
-        paddingTop: 8,
-        ...SHADOWS.soft,
     },
     tabLabel: {
         fontSize: 10,
@@ -152,7 +206,6 @@ const styles = StyleSheet.create({
         borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',
         alignItems: 'center',
-        ...SHADOWS.glow,
     },
 });
 

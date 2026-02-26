@@ -1,73 +1,135 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar,
+    View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
-import MoodBadge, { MOOD_CONFIG } from '../components/MoodBadge';
+import MoodBadge, { getMoodConfig } from '../components/MoodBadge';
 import { useAuth } from '../context/AuthContext';
-import { saveMoodEntry } from '../services/dbService';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { saveMoodEntry, getMoodHistory } from '../services/dbService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const MOODS = ['happy', 'good', 'neutral', 'sad', 'stressed', 'anxious'];
+const MOOD_KEYS = { happy: 'moodHappy', good: 'moodGood', neutral: 'moodNeutral', sad: 'moodSad', stressed: 'moodStressed', anxious: 'moodAnxious' };
+const DAY_SHORTS = ['monShort', 'tueShort', 'wedShort', 'thuShort', 'friShort', 'satShort', 'sunShort'];
 
-const MOCK_HISTORY = [
-    { id: '1', mood: 'happy', note: 'Had a great day at work!', time: 'Today, 9:00 AM', score: 85 },
-    { id: '2', mood: 'neutral', note: 'Feeling okay, nothing special', time: 'Yesterday, 8:30 PM', score: 55 },
-    { id: '3', mood: 'stressed', note: 'Deadline pressure at work', time: 'Yesterday, 2:00 PM', score: 30 },
-    { id: '4', mood: 'good', note: 'Morning meditation helped!', time: '2 days ago', score: 72 },
-    { id: '5', mood: 'sad', note: 'Missing my friends', time: '3 days ago', score: 35 },
-    { id: '6', mood: 'happy', note: 'Completed my workout goal!', time: '4 days ago', score: 90 },
-];
+const getScoreForMood = (mood) => {
+    const scores = { happy: 90, good: 75, neutral: 50, sad: 30, stressed: 25, anxious: 20 };
+    return scores[mood] || 50;
+};
 
-const WEEKLY_DATA = [
-    { day: 'M', score: 85, mood: 'happy' },
-    { day: 'T', score: 70, mood: 'good' },
-    { day: 'W', score: 45, mood: 'neutral' },
-    { day: 'T', score: 30, mood: 'stressed' },
-    { day: 'F', score: 65, mood: 'good' },
-    { day: 'S', score: 90, mood: 'happy' },
-    { day: 'S', score: 78, mood: 'happy' },
-];
+const formatTime = (date, t) => {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffDays === 0) {
+        return `${t('today')}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays === 1) {
+        return `${t('yesterday')}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return `${diffDays} ${t('daysAgo')}`;
+};
 
 const MoodTrackerScreen = () => {
+    const { colors, shadows, isDark } = useTheme();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [selectedMood, setSelectedMood] = useState(null);
     const [note, setNote] = useState('');
     const [logged, setLogged] = useState(false);
+    const [history, setHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+    const moodConfigs = getMoodConfig(colors);
+
+    const loadHistory = useCallback(async () => {
+        if (!user) return;
+        try {
+            setLoadingHistory(true);
+            const entries = await getMoodHistory(user.uid, 20);
+            setHistory(entries);
+        } catch (err) {
+            console.log('Error loading mood history:', err);
+        } finally {
+            setLoadingHistory(false);
+        }
+    }, [user]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadHistory();
+        }, [loadHistory])
+    );
 
     const handleLog = async () => {
         if (selectedMood && user) {
             try {
-                const moodConfig = MOOD_CONFIG[selectedMood];
                 await saveMoodEntry(user.uid, {
                     mood: selectedMood,
                     note: note.trim(),
-                    score: moodConfig ? getScoreForMood(selectedMood) : 50,
+                    score: getScoreForMood(selectedMood),
                 });
                 setLogged(true);
                 setTimeout(() => setLogged(false), 2000);
                 setSelectedMood(null);
                 setNote('');
+                // Reload history after logging
+                loadHistory();
             } catch (error) {
                 console.log('Error saving mood:', error);
             }
         }
     };
 
-    const getScoreForMood = (mood) => {
-        const scores = { happy: 90, good: 75, neutral: 50, sad: 30, stressed: 25, anxious: 20 };
-        return scores[mood] || 50;
+    // Build weekly chart from real data
+    const buildWeeklyData = () => {
+        const now = new Date();
+        const result = [];
+        const dayKeys = ['sunShort', 'monShort', 'tueShort', 'wedShort', 'thuShort', 'friShort', 'satShort'];
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            d.setHours(0, 0, 0, 0);
+            const dayKey = dayKeys[d.getDay()];
+
+            // Find mood entries for this day
+            const dayEntries = history.filter(e => {
+                const ed = new Date(e.timestamp);
+                return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth() && ed.getDate() === d.getDate();
+            });
+
+            const avgScore = dayEntries.length > 0
+                ? Math.round(dayEntries.reduce((s, e) => s + (e.score || 50), 0) / dayEntries.length)
+                : 0;
+
+            // Find dominant mood
+            const dominantMood = dayEntries.length > 0 ? dayEntries[0].mood : 'neutral';
+
+            result.push({
+                day: t(dayKey),
+                score: avgScore,
+                mood: dominantMood,
+            });
+        }
+        return result;
     };
 
+    const weeklyData = buildWeeklyData();
+    const weekAvg = weeklyData.filter(d => d.score > 0).length > 0
+        ? Math.round(weeklyData.filter(d => d.score > 0).reduce((s, d) => s + d.score, 0) / weeklyData.filter(d => d.score > 0).length)
+        : 0;
+
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
-                <Text style={styles.title}>Mood Tracker</Text>
-                <Text style={styles.subtitle}>How are you feeling right now?</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>{t('moodTracker')}</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('howAreYouFeeling')}</Text>
 
                 {/* Mood Selector */}
                 <GlassCard style={styles.moodSelector}>
@@ -80,9 +142,10 @@ const MoodTrackerScreen = () => {
                                 style={[
                                     styles.moodOption,
                                     selectedMood === mood && {
-                                        backgroundColor: MOOD_CONFIG[mood].color + '20',
-                                        borderColor: MOOD_CONFIG[mood].color + '50',
+                                        backgroundColor: moodConfigs[mood].color + '20',
+                                        borderColor: moodConfigs[mood].color + '50',
                                     },
+                                    { borderColor: 'transparent' }
                                 ]}
                             >
                                 <MoodBadge mood={mood} size="sm" showLabel />
@@ -91,11 +154,11 @@ const MoodTrackerScreen = () => {
                     </View>
 
                     {/* Note Input */}
-                    <View style={styles.noteContainer}>
+                    <View style={[styles.noteContainer, { backgroundColor: colors.surfaceLight, borderColor: colors.cardBorder }]}>
                         <TextInput
-                            style={styles.noteInput}
-                            placeholder="Add a note about how you're feeling..."
-                            placeholderTextColor={COLORS.textMuted}
+                            style={[styles.noteInput, { color: colors.textPrimary }]}
+                            placeholder={t('addNote')}
+                            placeholderTextColor={colors.textMuted}
                             value={note}
                             onChangeText={setNote}
                             multiline
@@ -110,16 +173,16 @@ const MoodTrackerScreen = () => {
                         disabled={!selectedMood}
                     >
                         <LinearGradient
-                            colors={selectedMood ? COLORS.gradientPrimary : [COLORS.surfaceLight, COLORS.surfaceLight]}
+                            colors={selectedMood ? colors.gradientPrimary : [colors.surfaceLight, colors.surfaceLight]}
                             style={styles.logButton}
                         >
                             <Ionicons
                                 name={logged ? 'checkmark-circle' : 'add-circle'}
                                 size={20}
-                                color={COLORS.white}
+                                color={colors.white}
                             />
-                            <Text style={styles.logButtonText}>
-                                {logged ? 'Logged!' : 'Log Mood'}
+                            <Text style={[styles.logButtonText, { color: colors.white }]}>
+                                {logged ? t('logged') : t('logMoodBtn')}
                             </Text>
                         </LinearGradient>
                     </TouchableOpacity>
@@ -128,23 +191,25 @@ const MoodTrackerScreen = () => {
                 {/* Weekly Chart */}
                 <GlassCard style={styles.chartCard}>
                     <View style={styles.chartHeader}>
-                        <Text style={styles.sectionTitle}>This Week</Text>
-                        <View style={styles.avgBadge}>
-                            <Text style={styles.avgText}>Avg: 66%</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('thisWeek')}</Text>
+                        <View style={[styles.avgBadge, { backgroundColor: colors.primary + '20' }]}>
+                            <Text style={[styles.avgText, { color: colors.primary }]}>{t('avg')}: {weekAvg}%</Text>
                         </View>
                     </View>
                     <View style={styles.chartContainer}>
-                        {WEEKLY_DATA.map((item, index) => {
-                            const moodConfig = MOOD_CONFIG[item.mood];
+                        {weeklyData.map((item, index) => {
+                            const moodConfig = moodConfigs[item.mood] || moodConfigs.neutral;
                             return (
                                 <View key={index} style={styles.chartItem}>
-                                    <View style={styles.barContainer}>
-                                        <LinearGradient
-                                            colors={[moodConfig.color, moodConfig.color + '60']}
-                                            style={[styles.bar, { height: `${item.score}%` }]}
-                                        />
+                                    <View style={[styles.barContainer, { backgroundColor: colors.surfaceLight }]}>
+                                        {item.score > 0 && (
+                                            <LinearGradient
+                                                colors={[moodConfig.color, moodConfig.color + '60']}
+                                                style={[styles.bar, { height: `${item.score}%` }]}
+                                            />
+                                        )}
                                     </View>
-                                    <Text style={styles.dayText}>{item.day}</Text>
+                                    <Text style={[styles.dayText, { color: colors.textMuted }]}>{item.day}</Text>
                                 </View>
                             );
                         })}
@@ -153,30 +218,44 @@ const MoodTrackerScreen = () => {
 
                 {/* History */}
                 <View style={styles.historyHeader}>
-                    <Text style={styles.sectionTitle}>Recent Entries</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recentEntries')}</Text>
                 </View>
 
-                {MOCK_HISTORY.map((entry) => {
-                    const config = MOOD_CONFIG[entry.mood];
-                    return (
-                        <View key={entry.id} style={styles.historyItem}>
-                            <View style={[styles.historyDot, { backgroundColor: config.color }]} />
-                            <View style={styles.historyContent}>
-                                <View style={styles.historyTop}>
-                                    <Text style={styles.historyEmoji}>{config.emoji}</Text>
-                                    <Text style={[styles.historyMood, { color: config.color }]}>
-                                        {config.label}
-                                    </Text>
-                                    <View style={styles.historyScoreBadge}>
-                                        <Text style={styles.historyScore}>{entry.score}%</Text>
+                {loadingHistory ? (
+                    <View style={{ padding: SPACING.xxl, alignItems: 'center' }}>
+                        <ActivityIndicator color={colors.primary} />
+                        <Text style={[styles.dayText, { color: colors.textMuted, marginTop: SPACING.md }]}>{t('loadingMoods')}</Text>
+                    </View>
+                ) : history.length === 0 ? (
+                    <GlassCard style={{ alignItems: 'center', padding: SPACING.xxl }}>
+                        <Ionicons name="happy-outline" size={40} color={colors.textMuted} />
+                        <Text style={[styles.dayText, { color: colors.textMuted, marginTop: SPACING.md }]}>{t('noEntries')}</Text>
+                    </GlassCard>
+                ) : (
+                    history.map((entry) => {
+                        const config = moodConfigs[entry.mood] || moodConfigs.neutral;
+                        return (
+                            <View key={entry.id} style={styles.historyItem}>
+                                <View style={[styles.historyDot, { backgroundColor: config.color }]} />
+                                <View style={[styles.historyContent, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}>
+                                    <View style={styles.historyTop}>
+                                        <Text style={styles.historyEmoji}>{config.emoji}</Text>
+                                        <Text style={[styles.historyMood, { color: config.color }]}>
+                                            {config.label}
+                                        </Text>
+                                        <View style={[styles.historyScoreBadge, { backgroundColor: colors.surfaceLight }]}>
+                                            <Text style={[styles.historyScore, { color: colors.textSecondary }]}>{entry.score}%</Text>
+                                        </View>
                                     </View>
+                                    {entry.note ? (
+                                        <Text style={[styles.historyNote, { color: colors.textSecondary }]}>{entry.note}</Text>
+                                    ) : null}
+                                    <Text style={[styles.historyTime, { color: colors.textMuted }]}>{formatTime(entry.timestamp, t)}</Text>
                                 </View>
-                                <Text style={styles.historyNote}>{entry.note}</Text>
-                                <Text style={styles.historyTime}>{entry.time}</Text>
                             </View>
-                        </View>
-                    );
-                })}
+                        );
+                    })
+                )}
 
                 <View style={{ height: 30 }} />
             </ScrollView>

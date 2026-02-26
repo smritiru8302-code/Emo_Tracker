@@ -6,8 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
+import { useTheme } from '../context/ThemeContext';
 
-const RESOURCES = [
+const getResources = (colors) => [
     {
         id: '1',
         category: 'Helplines',
@@ -17,7 +18,7 @@ const RESOURCES = [
                 description: '24/7 confidential support for people in distress',
                 phone: '988',
                 icon: 'call',
-                color: COLORS.danger,
+                color: colors.danger,
                 urgent: true,
             },
             {
@@ -25,14 +26,14 @@ const RESOURCES = [
                 description: 'Free professional counseling service',
                 phone: '9152987821',
                 icon: 'headset',
-                color: COLORS.primary,
+                color: colors.primary,
             },
             {
                 title: 'Vandrevala Foundation',
                 description: '24/7 mental health helpline',
                 phone: '1860-2662-345',
                 icon: 'heart',
-                color: COLORS.accent,
+                color: colors.accent,
             },
         ],
     },
@@ -44,21 +45,21 @@ const RESOURCES = [
                 title: 'Deep Breathing Exercise',
                 description: '4-7-8 technique for instant calm. Breathe in for 4s, hold for 7s, exhale for 8s.',
                 icon: 'leaf',
-                color: COLORS.secondary,
+                color: colors.secondary,
                 type: 'exercise',
             },
             {
                 title: 'Progressive Muscle Relaxation',
                 description: 'Tense and release each muscle group to reduce physical tension.',
                 icon: 'body',
-                color: COLORS.info,
+                color: colors.info,
                 type: 'exercise',
             },
             {
                 title: 'Grounding Technique — 5-4-3-2-1',
                 description: 'Notice 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste.',
                 icon: 'eye',
-                color: COLORS.accentWarm,
+                color: colors.accentWarm,
                 type: 'exercise',
             },
         ],
@@ -71,21 +72,21 @@ const RESOURCES = [
                 title: 'Understanding Anxiety',
                 description: 'Learn what triggers anxiety and how to manage it effectively.',
                 icon: 'book',
-                color: COLORS.primary,
+                color: colors.primary,
                 type: 'article',
             },
             {
                 title: 'Building Resilience',
                 description: 'Strategies to strengthen your mental health over time.',
                 icon: 'fitness',
-                color: COLORS.secondary,
+                color: colors.secondary,
                 type: 'article',
             },
             {
                 title: 'Sleep Hygiene Guide',
                 description: 'Tips for better sleep to improve mental wellness.',
                 icon: 'moon',
-                color: COLORS.info,
+                color: colors.info,
                 type: 'article',
             },
         ],
@@ -93,9 +94,11 @@ const RESOURCES = [
 ];
 
 const ResourcesScreen = () => {
+    const { colors, shadows, isDark } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
+    const resources = getResources(colors);
 
-    const filteredResources = RESOURCES.map(cat => ({
+    const filteredResources = resources.map(cat => ({
         ...cat,
         items: cat.items.filter(item =>
             item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -104,42 +107,42 @@ const ResourcesScreen = () => {
     })).filter(cat => cat.items.length > 0);
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
-                <Text style={styles.title}>Resources</Text>
-                <Text style={styles.subtitle}>Support and self-help materials</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>Resources</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Support and self-help materials</Text>
 
                 {/* Search */}
-                <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color={COLORS.textMuted} />
+                <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}>
+                    <Ionicons name="search" size={20} color={colors.textMuted} />
                     <TextInput
-                        style={styles.searchInput}
+                        style={[styles.searchInput, { color: colors.textPrimary }]}
                         placeholder="Search resources..."
-                        placeholderTextColor={COLORS.textMuted}
+                        placeholderTextColor={colors.textMuted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color={COLORS.textMuted} />
+                            <Ionicons name="close-circle" size={20} color={colors.textMuted} />
                         </TouchableOpacity>
                     )}
                 </View>
 
                 {/* Emergency Card */}
                 <GlassCard
-                    style={styles.emergencyCard}
-                    gradientColors={['rgba(255,71,87,0.15)', 'rgba(255,71,87,0.05)']}
+                    style={[styles.emergencyCard, { borderColor: colors.danger + '25' }]}
+                    gradientColors={isDark ? ['rgba(232,168,152,0.15)', 'rgba(232,168,152,0.05)'] : ['rgba(255,71,87,0.15)', 'rgba(255,71,87,0.05)']}
                 >
                     <View style={styles.emergencyContent}>
-                        <View style={styles.emergencyIcon}>
-                            <Ionicons name="warning" size={28} color={COLORS.danger} />
+                        <View style={[styles.emergencyIcon, { backgroundColor: colors.danger + '15' }]}>
+                            <Ionicons name="warning" size={28} color={colors.danger} />
                         </View>
                         <View style={styles.emergencyText}>
-                            <Text style={styles.emergencyTitle}>In Crisis?</Text>
-                            <Text style={styles.emergencyDesc}>
+                            <Text style={[styles.emergencyTitle, { color: colors.danger }]}>In Crisis?</Text>
+                            <Text style={[styles.emergencyDesc, { color: colors.textSecondary }]}>
                                 If you or someone you know is in immediate danger, please call emergency services.
                             </Text>
                         </View>
@@ -149,11 +152,11 @@ const ResourcesScreen = () => {
                         onPress={() => Linking.openURL('tel:112')}
                     >
                         <LinearGradient
-                            colors={COLORS.gradientAccent}
+                            colors={colors.gradientAccent}
                             style={styles.emergencyButton}
                         >
-                            <Ionicons name="call" size={18} color={COLORS.white} />
-                            <Text style={styles.emergencyBtnText}>Call Emergency (112)</Text>
+                            <Ionicons name="call" size={18} color={colors.white} />
+                            <Text style={[styles.emergencyBtnText, { color: colors.white }]}>Call Emergency (112)</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </GlassCard>
@@ -161,19 +164,20 @@ const ResourcesScreen = () => {
                 {/* Resource Categories */}
                 {filteredResources.map((category) => (
                     <View key={category.id} style={styles.categorySection}>
-                        <Text style={styles.categoryTitle}>{category.category}</Text>
+                        <Text style={[styles.categoryTitle, { color: colors.textPrimary }]}>{category.category}</Text>
                         {category.items.map((item, index) => (
                             <TouchableOpacity key={index} activeOpacity={0.7}>
                                 <View style={[
                                     styles.resourceCard,
-                                    item.urgent && { borderColor: COLORS.danger + '30' },
+                                    { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+                                    item.urgent && { borderColor: colors.danger + '30' },
                                 ]}>
                                     <View style={[styles.resourceIcon, { backgroundColor: item.color + '15' }]}>
                                         <Ionicons name={item.icon} size={24} color={item.color} />
                                     </View>
                                     <View style={styles.resourceInfo}>
-                                        <Text style={styles.resourceTitle}>{item.title}</Text>
-                                        <Text style={styles.resourceDesc}>{item.description}</Text>
+                                        <Text style={[styles.resourceTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+                                        <Text style={[styles.resourceDesc, { color: colors.textSecondary }]}>{item.description}</Text>
                                         {item.phone && (
                                             <TouchableOpacity
                                                 style={styles.phoneContainer}
@@ -193,7 +197,7 @@ const ResourcesScreen = () => {
                                             </View>
                                         )}
                                     </View>
-                                    <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+                                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
                                 </View>
                             </TouchableOpacity>
                         ))}

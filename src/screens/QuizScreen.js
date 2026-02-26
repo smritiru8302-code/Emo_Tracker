@@ -9,17 +9,18 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/t
 import GlassCard from '../components/GlassCard';
 import GradientButton from '../components/GradientButton';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { saveQuizResult } from '../services/dbService';
 
 const { width } = Dimensions.get('window');
 
 // 5 dimensions × 4 questions = 20 questions
-const DIMENSIONS = [
-    { key: 'emotional', label: 'Emotional Stability', icon: 'heart', color: '#E09B8A' },
-    { key: 'anxiety', label: 'Anxiety Level', icon: 'pulse', color: '#E8B86D' },
-    { key: 'social', label: 'Social Engagement', icon: 'people', color: '#7BB5D3' },
-    { key: 'selfPerception', label: 'Self-Perception', icon: 'star', color: '#6B9B7E' },
-    { key: 'resilience', label: 'Resilience', icon: 'shield-checkmark', color: '#8BB89E' },
+const getDimensions = (colors) => [
+    { key: 'emotional', label: 'Emotional Stability', icon: 'heart', color: colors.moodStressed },
+    { key: 'anxiety', label: 'Anxiety Level', icon: 'pulse', color: colors.accent },
+    { key: 'social', label: 'Social Engagement', icon: 'people', color: colors.info },
+    { key: 'selfPerception', label: 'Self-Perception', icon: 'star', color: colors.primary },
+    { key: 'resilience', label: 'Resilience', icon: colors.isDark ? 'shield-checkmark' : 'shield-checkmark-outline', color: colors.secondary },
 ];
 
 const QUESTIONS = [
@@ -64,36 +65,37 @@ const SCALE_LABELS = [
     'Strongly\nDisagree',
 ];
 
-const SCALE_COLORS = [
-    '#00D9A6', '#33E8BF', '#88F0DA',
-    '#B0B0C0',
-    '#FFBB88', '#FF9F43', '#FF6B6B',
+const getScaleColors = (colors) => [
+    colors.moodGood, colors.primary, colors.secondary,
+    colors.textMuted,
+    colors.accentWarm, colors.accent, colors.danger,
 ];
 
-const getStage = (percentage) => {
+const getStage = (percentage, colors) => {
     if (percentage >= 75) return {
-        stage: 'Thriving', emoji: '🌟', color: '#00D9A6',
+        stage: 'Thriving', emoji: '🌟', color: colors.primary,
         desc: 'Your mental health is excellent! You show strong emotional balance, healthy social connections, and great resilience. Keep nurturing these strengths!',
         tips: ['Continue your positive habits', 'Help others on their wellness journey', 'Try advanced mindfulness techniques'],
     };
     if (percentage >= 50) return {
-        stage: 'Coping', emoji: '🌤️', color: '#54A0FF',
+        stage: 'Coping', emoji: '🌤️', color: colors.info,
         desc: 'You\'re managing well overall, but there are areas that could use some attention. With small improvements, you can reach an even better state.',
         tips: ['Build a consistent self-care routine', 'Practice gratitude journaling', 'Strengthen your support network'],
     };
     if (percentage >= 25) return {
-        stage: 'Struggling', emoji: '🌧️', color: '#FF9F43',
+        stage: 'Struggling', emoji: '🌧️', color: colors.accent,
         desc: 'You\'re going through a tough time. Several aspects of your mental health need attention. Reaching out for support is a sign of strength.',
         tips: ['Talk to a trusted friend or family member', 'Consider professional counseling', 'Start with small daily wellness activities'],
     };
     return {
-        stage: 'In Crisis', emoji: '🆘', color: '#FF4757',
+        stage: 'In Crisis', emoji: '🆘', color: colors.danger,
         desc: 'Your results suggest significant distress. Please know that help is available and you deserve support. Reaching out is the most important step you can take.',
         tips: ['Contact a mental health helpline immediately', 'Speak with a mental health professional', 'Reach out to someone you trust right now'],
     };
 };
 
 const QuizScreen = ({ navigation }) => {
+    const { colors, shadows, isDark } = useTheme();
     const { user } = useAuth();
     const [phase, setPhase] = useState('intro'); // intro, quiz, results
     const [currentQ, setCurrentQ] = useState(0);
@@ -101,9 +103,11 @@ const QuizScreen = ({ navigation }) => {
     const [resultsSaved, setResultsSaved] = useState(false);
     const progressAnim = useRef(new Animated.Value(0)).current;
 
+    const dimensions = getDimensions(colors);
+    const scaleColors = getScaleColors(colors);
     const question = QUESTIONS[currentQ];
     const progress = ((currentQ + (answers[question?.id] !== undefined ? 1 : 0)) / QUESTIONS.length) * 100;
-    const currentDim = DIMENSIONS.find(d => d.key === question?.dim);
+    const currentDim = dimensions.find(d => d.key === question?.dim);
 
     const handleSelect = (value) => {
         setAnswers(prev => ({ ...prev, [question.id]: value }));
@@ -118,7 +122,7 @@ const QuizScreen = ({ navigation }) => {
 
     const calculateResults = () => {
         const dimScores = {};
-        DIMENSIONS.forEach(dim => {
+        dimensions.forEach(dim => {
             const dimQs = QUESTIONS.filter(q => q.dim === dim.key);
             let total = 0;
             dimQs.forEach(q => {
@@ -133,7 +137,7 @@ const QuizScreen = ({ navigation }) => {
         });
 
         const overall = Math.round(
-            Object.values(dimScores).reduce((a, b) => a + b, 0) / DIMENSIONS.length
+            Object.values(dimScores).reduce((a, b) => a + b, 0) / dimensions.length
         );
 
         return { dimScores, overall };
@@ -158,53 +162,53 @@ const QuizScreen = ({ navigation }) => {
     // ─── INTRO PHASE ─────────────────────────────────────
     if (phase === 'intro') {
         return (
-            <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
                 <ScrollView contentContainerStyle={styles.introContent} showsVerticalScrollIndicator={false}>
                     <View style={styles.introIconWrap}>
-                        <LinearGradient colors={COLORS.gradientPrimary} style={styles.introIcon}>
-                            <Ionicons name="leaf" size={48} color={COLORS.white} />
+                        <LinearGradient colors={colors.gradientPrimary} style={[styles.introIcon, shadows.glow]}>
+                            <Ionicons name="leaf" size={48} color={colors.white} />
                         </LinearGradient>
                     </View>
 
-                    <Text style={styles.introTitle}>Mental Health{'\n'}Stage Quiz</Text>
-                    <Text style={styles.introSubtitle}>
+                    <Text style={[styles.introTitle, { color: colors.textPrimary }]}>Mental Health{'\n'}Stage Quiz</Text>
+                    <Text style={[styles.introSubtitle, { color: colors.textSecondary }]}>
                         Discover where you stand across 5 key dimensions of mental wellness
                     </Text>
 
                     <View style={styles.dimPreview}>
-                        {DIMENSIONS.map((dim) => (
-                            <View key={dim.key} style={styles.dimPreviewItem}>
+                        {dimensions.map((dim) => (
+                            <View key={dim.key} style={[styles.dimPreviewItem, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}>
                                 <View style={[styles.dimDot, { backgroundColor: dim.color }]} />
                                 <Ionicons name={dim.icon} size={18} color={dim.color} />
-                                <Text style={styles.dimPreviewText}>{dim.label}</Text>
+                                <Text style={[styles.dimPreviewText, { color: colors.textPrimary }]}>{dim.label}</Text>
                             </View>
                         ))}
                     </View>
 
                     <GlassCard style={styles.infoCard}>
                         <View style={styles.infoRow}>
-                            <Ionicons name="time-outline" size={20} color={COLORS.primary} />
-                            <Text style={styles.infoText}>Takes about 3-5 minutes</Text>
+                            <Ionicons name="time-outline" size={20} color={colors.primary} />
+                            <Text style={[styles.infoText, { color: colors.textSecondary }]}>Takes about 3-5 minutes</Text>
                         </View>
                         <View style={styles.infoRow}>
-                            <Ionicons name="help-circle-outline" size={20} color={COLORS.primary} />
-                            <Text style={styles.infoText}>20 questions, rate on a agree/disagree scale</Text>
+                            <Ionicons name="help-circle-outline" size={20} color={colors.primary} />
+                            <Text style={[styles.infoText, { color: colors.textSecondary }]}>20 questions, rate on a agree/disagree scale</Text>
                         </View>
                         <View style={styles.infoRow}>
-                            <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
-                            <Text style={styles.infoText}>Your answers stay private on your device</Text>
+                            <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
+                            <Text style={[styles.infoText, { color: colors.textSecondary }]}>Your answers stay private on your device</Text>
                         </View>
                     </GlassCard>
 
                     <GradientButton
                         title="Start Quiz"
                         onPress={() => setPhase('quiz')}
-                        icon={<Ionicons name="arrow-forward" size={20} color={COLORS.white} />}
+                        icon={<Ionicons name="arrow-forward" size={20} color={colors.white} />}
                         style={{ marginTop: SPACING.xl }}
                     />
 
-                    <Text style={styles.disclaimer}>
+                    <Text style={[styles.disclaimer, { color: colors.textMuted }]}>
                         ⚕️ This is not a clinical diagnosis. Consult a professional for medical advice.
                     </Text>
                 </ScrollView>
@@ -215,28 +219,28 @@ const QuizScreen = ({ navigation }) => {
     // ─── RESULTS PHASE ───────────────────────────────────
     if (phase === 'results') {
         const { dimScores, overall } = calculateResults();
-        const stage = getStage(overall);
+        const stage = getStage(overall, colors);
 
         return (
-            <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
                 <ScrollView contentContainerStyle={styles.resultContent} showsVerticalScrollIndicator={false}>
-                    <Text style={styles.resultHeader}>Your Results</Text>
+                    <Text style={[styles.resultHeader, { color: colors.textPrimary }]}>Your Results</Text>
 
                     {/* Overall Stage Card */}
                     <GlassCard style={styles.stageCard}>
                         <Text style={styles.stageEmoji}>{stage.emoji}</Text>
                         <Text style={[styles.stageLabel, { color: stage.color }]}>{stage.stage}</Text>
                         <View style={styles.overallScoreWrap}>
-                            <Text style={styles.overallScore}>{overall}</Text>
-                            <Text style={styles.overallMax}>/100</Text>
+                            <Text style={[styles.overallScore, { color: colors.textPrimary }]}>{overall}</Text>
+                            <Text style={[styles.overallMax, { color: colors.textMuted }]}>/100</Text>
                         </View>
-                        <Text style={styles.stageDesc}>{stage.desc}</Text>
+                        <Text style={[styles.stageDesc, { color: colors.textSecondary }]}>{stage.desc}</Text>
                     </GlassCard>
 
                     {/* Dimension Breakdown */}
-                    <Text style={styles.sectionTitle}>Dimension Breakdown</Text>
-                    {DIMENSIONS.map((dim) => {
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Dimension Breakdown</Text>
+                    {dimensions.map((dim) => {
                         const score = dimScores[dim.key];
                         return (
                             <GlassCard key={dim.key} style={styles.dimCard}>
@@ -245,11 +249,11 @@ const QuizScreen = ({ navigation }) => {
                                         <Ionicons name={dim.icon} size={20} color={dim.color} />
                                     </View>
                                     <View style={styles.dimInfo}>
-                                        <Text style={styles.dimLabel}>{dim.label}</Text>
+                                        <Text style={[styles.dimLabel, { color: colors.textPrimary }]}>{dim.label}</Text>
                                         <Text style={[styles.dimScore, { color: dim.color }]}>{score}%</Text>
                                     </View>
                                 </View>
-                                <View style={styles.dimBarBg}>
+                                <View style={[styles.dimBarBg, { backgroundColor: colors.surfaceLight }]}>
                                     <View style={[styles.dimBarFill, { width: `${score}%`, backgroundColor: dim.color }]} />
                                 </View>
                             </GlassCard>
@@ -257,14 +261,14 @@ const QuizScreen = ({ navigation }) => {
                     })}
 
                     {/* Recommendations */}
-                    <Text style={styles.sectionTitle}>Recommendations</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recommendations</Text>
                     <GlassCard style={styles.tipsCard}>
                         {stage.tips.map((tip, i) => (
                             <View key={i} style={styles.tipRow}>
                                 <View style={[styles.tipNum, { backgroundColor: stage.color + '20' }]}>
                                     <Text style={[styles.tipNumText, { color: stage.color }]}>{i + 1}</Text>
                                 </View>
-                                <Text style={styles.tipText}>{tip}</Text>
+                                <Text style={[styles.tipText, { color: colors.textSecondary }]}>{tip}</Text>
                             </View>
                         ))}
                     </GlassCard>
@@ -278,14 +282,20 @@ const QuizScreen = ({ navigation }) => {
                                 setCurrentQ(0);
                                 setPhase('intro');
                             }}
-                            icon={<Ionicons name="refresh" size={18} color={COLORS.white} />}
-                            colors={[COLORS.primary, COLORS.primary]}
+                            icon={<Ionicons name="refresh" size={18} color={colors.white} />}
+                            colors={[colors.primary, colors.primary]}
                         />
                         <GradientButton
                             title="Talk to AI"
+<<<<<<< Updated upstream
                             onPress={() => navigation.navigate('MainTabs', { screen: 'Chat' })}
                             icon={<Ionicons name="chatbubble" size={18} color={COLORS.white} />}
                             colors={COLORS.gradientSecondary}
+=======
+                            onPress={() => navigation.navigate('Chat')}
+                            icon={<Ionicons name="chatbubble" size={18} color={colors.white} />}
+                            colors={colors.gradientSecondary}
+>>>>>>> Stashed changes
                             style={{ marginTop: SPACING.md }}
                         />
                     </View>
@@ -300,8 +310,8 @@ const QuizScreen = ({ navigation }) => {
     const selectedValue = answers[question.id];
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
 
             {/* Progress Header */}
             <View style={styles.quizHeader}>
@@ -310,15 +320,15 @@ const QuizScreen = ({ navigation }) => {
                         if (currentQ > 0) setCurrentQ(prev => prev - 1);
                         else setPhase('intro');
                     }}
-                    style={styles.backArrow}
+                    style={[styles.backArrow, { backgroundColor: colors.surface, borderColor: colors.cardBorder }]}
                 >
-                    <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+                    <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <View style={styles.progressArea}>
-                    <Text style={styles.progressText}>{currentQ + 1} / {QUESTIONS.length}</Text>
-                    <View style={styles.progressBg}>
+                    <Text style={[styles.progressText, { color: colors.textMuted }]}>{currentQ + 1} / {QUESTIONS.length}</Text>
+                    <View style={[styles.progressBg, { backgroundColor: colors.surfaceLight }]}>
                         <LinearGradient
-                            colors={COLORS.gradientPrimary}
+                            colors={colors.gradientPrimary}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={[styles.progressFill, { width: `${progress}%` }]}
@@ -337,14 +347,14 @@ const QuizScreen = ({ navigation }) => {
 
             {/* Question */}
             <View style={styles.questionArea}>
-                <Text style={styles.questionText}>{question.text}</Text>
+                <Text style={[styles.questionText, { color: colors.textPrimary }]}>{question.text}</Text>
             </View>
 
             {/* 7-Point Spectrum */}
             <View style={styles.spectrumArea}>
                 <View style={styles.spectrumLabels}>
-                    <Text style={[styles.spectrumEnd, { color: SCALE_COLORS[0] }]}>Agree</Text>
-                    <Text style={[styles.spectrumEnd, { color: SCALE_COLORS[6] }]}>Disagree</Text>
+                    <Text style={[styles.spectrumEnd, { color: scaleColors[0] }]}>Agree</Text>
+                    <Text style={[styles.spectrumEnd, { color: scaleColors[6] }]}>Disagree</Text>
                 </View>
 
                 <View style={styles.spectrumRow}>
@@ -366,13 +376,13 @@ const QuizScreen = ({ navigation }) => {
                                         width: baseSize,
                                         height: baseSize,
                                         borderRadius: baseSize / 2,
-                                        backgroundColor: isSelected ? scaleColor : scaleColor + '20',
+                                        backgroundColor: isSelected ? scaleColors[idx] : scaleColors[idx] + '20',
                                         borderWidth: isSelected ? 3 : 1,
-                                        borderColor: isSelected ? scaleColor : scaleColor + '40',
+                                        borderColor: isSelected ? scaleColors[idx] : scaleColors[idx] + '40',
                                     },
                                 ]}>
                                     {isSelected && (
-                                        <Ionicons name="checkmark" size={baseSize * 0.45} color={COLORS.white} />
+                                        <Ionicons name="checkmark" size={baseSize * 0.45} color={colors.white} />
                                     )}
                                 </View>
                             </TouchableOpacity>
@@ -384,7 +394,8 @@ const QuizScreen = ({ navigation }) => {
                     {SCALE_LABELS.map((label, idx) => (
                         <Text key={idx} style={[
                             styles.spectrumSubLabel,
-                            selectedValue === idx && { color: SCALE_COLORS[idx], fontWeight: '700' },
+                            { color: colors.textMuted },
+                            selectedValue === idx && { color: scaleColors[idx], fontWeight: '700' },
                         ]}>
                             {label}
                         </Text>
@@ -399,8 +410,8 @@ const QuizScreen = ({ navigation }) => {
                         onPress={() => setCurrentQ(prev => prev - 1)}
                         style={styles.navBackBtn}
                     >
-                        <Ionicons name="arrow-back" size={18} color={COLORS.textSecondary} />
-                        <Text style={styles.navBackText}>Previous</Text>
+                        <Ionicons name="arrow-back" size={18} color={colors.textSecondary} />
+                        <Text style={[styles.navBackText, { color: colors.textSecondary }]}>Previous</Text>
                     </TouchableOpacity>
                 )}
                 <View style={{ flex: 1 }} />
@@ -409,8 +420,8 @@ const QuizScreen = ({ navigation }) => {
                         title="See Results"
                         small
                         onPress={() => setPhase('results')}
-                        colors={COLORS.gradientSecondary}
-                        icon={<Ionicons name="checkmark-circle" size={18} color={COLORS.white} />}
+                        colors={colors.gradientSecondary}
+                        icon={<Ionicons name="checkmark-circle" size={18} color={colors.white} />}
                     />
                 )}
             </View>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar,
+    View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,10 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, SHADOWS } from '../styles/t
 import GlassCard from '../components/GlassCard';
 import GradientButton from '../components/GradientButton';
 import ProgressRing from '../components/ProgressRing';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { saveAssessmentResult } from '../services/dbService';
 
 const QUESTIONS = [
     {
@@ -54,19 +58,23 @@ const QUESTIONS = [
     },
 ];
 
-const getSeverity = (score) => {
+const getSeverity = (score, colors) => {
     const maxScore = QUESTIONS.length * 3;
     const percentage = (score / maxScore) * 100;
-    if (percentage <= 25) return { level: 'Minimal', color: COLORS.secondary, desc: 'Your responses suggest minimal symptoms. Keep up the great work! 🌟' };
-    if (percentage <= 50) return { level: 'Mild', color: COLORS.info, desc: 'Some mild symptoms detected. Consider practicing self-care and mindfulness exercises. 🧘' };
-    if (percentage <= 75) return { level: 'Moderate', color: COLORS.accentWarm, desc: 'Moderate symptoms noticed. We recommend talking to a mental health professional. 💛' };
-    return { level: 'Severe', color: COLORS.danger, desc: 'Significant symptoms detected. Please consider reaching out to a mental health professional or a crisis helpline. ❤️' };
+    if (percentage <= 25) return { level: 'Minimal', color: colors.secondary, desc: 'Your responses suggest minimal symptoms. Keep up the great work! 🌟' };
+    if (percentage <= 50) return { level: 'Mild', color: colors.info, desc: 'Some mild symptoms detected. Consider practicing self-care and mindfulness exercises. 🧘' };
+    if (percentage <= 75) return { level: 'Moderate', color: colors.accentWarm, desc: 'Moderate symptoms noticed. We recommend talking to a mental health professional. 💛' };
+    return { level: 'Severe', color: colors.danger, desc: 'Significant symptoms detected. Please consider reaching out to a mental health professional or a crisis helpline. ❤️' };
 };
 
-const AssessmentScreen = () => {
+const AssessmentScreen = ({ navigation }) => {
+    const { colors, shadows, isDark } = useTheme();
+    const { t } = useLanguage();
+    const { user } = useAuth();
     const [currentQ, setCurrentQ] = useState(0);
     const [answers, setAnswers] = useState({});
     const [showResult, setShowResult] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const handleAnswer = (qId, optionIndex) => {
         setAnswers(prev => ({ ...prev, [qId]: optionIndex }));
@@ -79,17 +87,43 @@ const AssessmentScreen = () => {
 
     const maxScore = QUESTIONS.length * 3;
     const percentage = Math.round(100 - (totalScore / maxScore) * 100);
-    const severity = getSeverity(totalScore);
+    const severity = getSeverity(totalScore, colors);
     const progress = ((currentQ + 1) / QUESTIONS.length) * 100;
-
     const canGoNext = answers[QUESTIONS[currentQ]?.id] !== undefined;
+
+    const handleShowResults = async () => {
+        if (!canGoNext) return;
+        setShowResult(true);
+
+        // Save to Firestore
+        if (user) {
+            setSaving(true);
+            try {
+                await saveAssessmentResult(user.uid, {
+                    answers,
+                    totalScore,
+                    maxScore,
+                    percentage,
+                    severity: severity.level,
+                    questionsCount: QUESTIONS.length,
+                });
+            } catch (err) {
+                console.log('Error saving assessment:', err);
+            } finally {
+                setSaving(false);
+            }
+        }
+    };
 
     if (showResult) {
         return (
-            <View style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.resultContent}>
-                    <Text style={styles.resultTitle}>Assessment Complete</Text>
+                    <Text style={[styles.resultTitle, { color: colors.textPrimary }]}>{t('yourResults')}</Text>
+                    {saving ? null : (
+                        <Text style={[styles.savedNote, { color: colors.secondary }]}>{t('resultsSaved')}</Text>
+                    )}
 
                     <GlassCard style={styles.resultCard}>
                         <View style={styles.resultCenter}>
@@ -109,31 +143,31 @@ const AssessmentScreen = () => {
                             </Text>
                         </View>
 
-                        <Text style={styles.resultDesc}>{severity.desc}</Text>
+                        <Text style={[styles.resultDesc, { color: colors.textSecondary }]}>{severity.desc}</Text>
 
                         {/* Score Breakdown */}
                         <View style={styles.breakdownSection}>
-                            <Text style={styles.breakdownTitle}>Score Breakdown</Text>
+                            <Text style={[styles.breakdownTitle, { color: colors.textPrimary }]}>Score Breakdown</Text>
                             {QUESTIONS.map((q, idx) => {
                                 const ansIdx = answers[q.id] ?? 0;
                                 const ansScore = q.scores[ansIdx];
                                 return (
                                     <View key={q.id} style={styles.breakdownItem}>
                                         <View style={styles.breakdownLeft}>
-                                            <Text style={styles.breakdownNum}>Q{idx + 1}</Text>
-                                            <View style={styles.breakdownBarBg}>
+                                            <Text style={[styles.breakdownNum, { color: colors.textMuted }]}>Q{idx + 1}</Text>
+                                            <View style={[styles.breakdownBarBg, { backgroundColor: colors.surfaceLight }]}>
                                                 <View
                                                     style={[
                                                         styles.breakdownBar,
                                                         {
                                                             width: `${(ansScore / 3) * 100}%`,
-                                                            backgroundColor: ansScore <= 1 ? COLORS.secondary : ansScore === 2 ? COLORS.accentWarm : COLORS.danger,
+                                                            backgroundColor: ansScore <= 1 ? colors.secondary : ansScore === 2 ? colors.accentWarm : colors.danger,
                                                         },
                                                     ]}
                                                 />
                                             </View>
                                         </View>
-                                        <Text style={styles.breakdownScore}>{q.options[ansIdx]}</Text>
+                                        <Text style={[styles.breakdownScore, { color: colors.textSecondary }]}>{q.options[ansIdx]}</Text>
                                     </View>
                                 );
                             })}
@@ -141,7 +175,7 @@ const AssessmentScreen = () => {
                     </GlassCard>
 
                     <GradientButton
-                        title="Take Again"
+                        title={t('retake')}
                         onPress={() => {
                             setAnswers({});
                             setCurrentQ(0);
@@ -150,6 +184,13 @@ const AssessmentScreen = () => {
                         icon={<Ionicons name="refresh" size={20} color={COLORS.white} />}
                         style={{ marginTop: SPACING.lg }}
                     />
+
+                    <TouchableOpacity
+                        style={[styles.homeBtn]}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Text style={[styles.homeBtnText, { color: colors.primary }]}>{t('goHome')}</Text>
+                    </TouchableOpacity>
 
                     <View style={{ height: 30 }} />
                 </ScrollView>
@@ -160,24 +201,24 @@ const AssessmentScreen = () => {
     const question = QUESTIONS[currentQ];
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F5F5EB" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.statusBar} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
-                <Text style={styles.title}>Well-being Check</Text>
-                <Text style={styles.subtitle}>PHQ-7 Mental Health Assessment</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>{t('mentalHealthAssessment')}</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('assessmentSubtitle')}</Text>
 
                 {/* Progress */}
                 <View style={styles.progressSection}>
                     <View style={styles.progressInfo}>
-                        <Text style={styles.progressLabel}>
-                            Question {currentQ + 1} of {QUESTIONS.length}
+                        <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
+                            {t('question')} {currentQ + 1} {t('of')} {QUESTIONS.length}
                         </Text>
-                        <Text style={styles.progressPercent}>{Math.round(progress)}%</Text>
+                        <Text style={[styles.progressPercent, { color: colors.primary }]}>{Math.round(progress)}%</Text>
                     </View>
-                    <View style={styles.progressBg}>
+                    <View style={[styles.progressBg, { backgroundColor: colors.surfaceLight }]}>
                         <LinearGradient
-                            colors={COLORS.gradientPrimary}
+                            colors={colors.gradientPrimary}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={[styles.progressFill, { width: `${progress}%` }]}
@@ -187,10 +228,10 @@ const AssessmentScreen = () => {
 
                 {/* Question Card */}
                 <GlassCard style={styles.questionCard}>
-                    <View style={styles.qNumBadge}>
-                        <Text style={styles.qNum}>{currentQ + 1}</Text>
+                    <View style={[styles.qNumBadge, { backgroundColor: colors.primary + '20' }]}>
+                        <Text style={[styles.qNum, { color: colors.primary }]}>{currentQ + 1}</Text>
                     </View>
-                    <Text style={styles.questionText}>{question.text}</Text>
+                    <Text style={[styles.questionText, { color: colors.textPrimary }]}>{question.text}</Text>
 
                     <View style={styles.optionsContainer}>
                         {question.options.map((option, idx) => {
@@ -202,19 +243,21 @@ const AssessmentScreen = () => {
                                     activeOpacity={0.7}
                                     style={[
                                         styles.optionBtn,
-                                        isSelected && styles.optionSelected,
-                                        isSelected && { borderColor: COLORS.primary + '60' },
+                                        { backgroundColor: colors.surfaceLight + '60', borderColor: colors.cardBorder },
+                                        isSelected && [styles.optionSelected, { backgroundColor: colors.primary + '12', borderColor: colors.primary + '60' }],
                                     ]}
                                 >
                                     <View style={[
                                         styles.optionRadio,
-                                        isSelected && { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+                                        { borderColor: colors.textMuted },
+                                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                     ]}>
-                                        {isSelected && <View style={styles.radioInner} />}
+                                        {isSelected && <View style={[styles.radioInner, { backgroundColor: colors.white }]} />}
                                     </View>
                                     <Text style={[
                                         styles.optionText,
-                                        isSelected && { color: COLORS.textPrimary },
+                                        { color: colors.textSecondary },
+                                        isSelected && { color: colors.textPrimary },
                                     ]}>
                                         {option}
                                     </Text>
@@ -231,26 +274,26 @@ const AssessmentScreen = () => {
                             onPress={() => setCurrentQ(prev => prev - 1)}
                             style={styles.backBtn}
                         >
-                            <Ionicons name="arrow-back" size={20} color={COLORS.textSecondary} />
-                            <Text style={styles.backBtnText}>Back</Text>
+                            <Ionicons name="arrow-back" size={20} color={colors.textSecondary} />
+                            <Text style={[styles.backBtnText, { color: colors.textSecondary }]}>{t('back')}</Text>
                         </TouchableOpacity>
                     )}
                     <View style={{ flex: 1 }} />
                     {currentQ < QUESTIONS.length - 1 ? (
                         <GradientButton
-                            title="Next"
+                            title={t('next')}
                             small
                             onPress={() => canGoNext && setCurrentQ(prev => prev + 1)}
-                            colors={canGoNext ? COLORS.gradientPrimary : [COLORS.surfaceLight, COLORS.surfaceLight]}
-                            icon={<Ionicons name="arrow-forward" size={16} color={COLORS.white} />}
+                            colors={canGoNext ? colors.gradientPrimary : [colors.surfaceLight, colors.surfaceLight]}
+                            icon={<Ionicons name="arrow-forward" size={16} color={colors.white} />}
                         />
                     ) : (
                         <GradientButton
-                            title="See Results"
+                            title={t('submit')}
                             small
-                            onPress={() => canGoNext && setShowResult(true)}
-                            colors={canGoNext ? COLORS.gradientSecondary : [COLORS.surfaceLight, COLORS.surfaceLight]}
-                            icon={<Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                            onPress={handleShowResults}
+                            colors={canGoNext ? colors.gradientSecondary : [colors.surfaceLight, colors.surfaceLight]}
+                            icon={<Ionicons name="checkmark" size={16} color={colors.white} />}
                         />
                     )}
                 </View>
@@ -393,6 +436,12 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: COLORS.textPrimary,
         textAlign: 'center',
+        marginBottom: SPACING.sm,
+    },
+    savedNote: {
+        textAlign: 'center',
+        fontSize: FONT_SIZES.sm,
+        fontWeight: '600',
         marginBottom: SPACING.xxl,
     },
     resultCard: {
@@ -471,6 +520,14 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         width: 90,
         textAlign: 'right',
+    },
+    homeBtn: {
+        alignItems: 'center',
+        paddingVertical: SPACING.lg,
+    },
+    homeBtnText: {
+        fontSize: FONT_SIZES.md,
+        fontWeight: '700',
     },
 });
 
