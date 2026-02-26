@@ -31,7 +31,7 @@ const TAB_CONFIG = {
     Profile: { icon: 'person-outline', activeIcon: 'person' },
 };
 
-const TabIcon = ({ route, focused, color, size }) => {
+const TabIcon = ({ route, focused, color }) => {
     const config = TAB_CONFIG[route.name];
     const iconName = focused ? config.activeIcon : config.icon;
 
@@ -51,29 +51,26 @@ const TabIcon = ({ route, focused, color, size }) => {
     return <Ionicons name={iconName} size={22} color={color} />;
 };
 
-const MainTabs = () => {
-    return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => (
-                    <TabIcon route={route} focused={focused} color={color} size={size} />
-                ),
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textMuted,
-                tabBarStyle: styles.tabBar,
-                tabBarLabelStyle: styles.tabLabel,
-                tabBarShowLabel: true,
-                headerShown: false,
-            })}
-        >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Chat" component={ChatScreen} />
-            <Tab.Screen name="Mood" component={MoodTrackerScreen} />
-            <Tab.Screen name="Resources" component={ResourcesScreen} />
-            <Tab.Screen name="Profile" component={ProfileScreen} />
-        </Tab.Navigator>
-    );
-};
+const MainTabs = () => (
+    <Tab.Navigator
+        screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color }) => (
+                <TabIcon route={route} focused={focused} color={color} />
+            ),
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: COLORS.textMuted,
+            tabBarStyle: styles.tabBar,
+            tabBarLabelStyle: styles.tabLabel,
+            headerShown: false,
+        })}
+    >
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Chat" component={ChatScreen} />
+        <Tab.Screen name="Mood" component={MoodTrackerScreen} />
+        <Tab.Screen name="Resources" component={ResourcesScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+);
 
 const AppNavigator = () => {
     const { user, loading } = useAuth();
@@ -92,7 +89,6 @@ const AppNavigator = () => {
         checkQuiz();
     }, [user]);
 
-    // 👇 ADD THIS BLOCK
     if (loading || (user && hasQuiz === null)) {
         return (
             <View style={styles.loadingContainer}>
@@ -105,16 +101,14 @@ const AppNavigator = () => {
         <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
-                    !hasQuiz ? (
-                        <>
+                    <>
+                        {!hasQuiz && (
                             <Stack.Screen name="Quiz" component={QuizScreen} />
-                        </>
-                    ) : (
-                        <>
-                            <Stack.Screen name="MainTabs" component={MainTabs} />
-                            <Stack.Screen name="Assessment" component={AssessmentScreen} />
-                        </>
-                    )
+                        )}
+
+                        <Stack.Screen name="MainTabs" component={MainTabs} />
+                        <Stack.Screen name="Assessment" component={AssessmentScreen} />
+                    </>
                 ) : (
                     <>
                         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
