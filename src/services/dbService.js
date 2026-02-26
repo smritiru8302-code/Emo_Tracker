@@ -46,9 +46,15 @@ export const saveQuizResult = async (uid, resultData) => {
     });
 };
 
-export const getQuizHistory = async (uid) => {
+export const getLatestQuizResult = async (uid) => {
     const ref = collection(db, 'users', uid, 'quizResults');
-    const q = query(ref, orderBy('timestamp', 'desc'), limit(10));
+    const q = query(ref, orderBy('timestamp', 'desc'), limit(1));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    if (!snap.empty) {
+        const doc = snap.docs[0];
+        return { id: doc.id, ...doc.data() };
+    }
+
+    return null;
 };

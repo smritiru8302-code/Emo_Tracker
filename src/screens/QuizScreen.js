@@ -202,14 +202,20 @@ const QuizScreen = ({ navigation }) => {
         const stage = getStage(overall);
 
         // Save results to Firestore (once)
-        if (!resultsSaved && user) {
-            setResultsSaved(true);
-            saveQuizResult(user.uid, {
-                overall,
-                dimensions: dimScores,
-                stage: stage.stage,
-            }).catch(err => console.log('Error saving quiz result:', err));
-        }
+        useEffect(() => {
+            if (phase === 'results' && user && !resultsSaved) {
+                const { dimScores, overall } = calculateResults();
+                const stage = getStage(overall);
+
+                setResultsSaved(true);
+
+                saveQuizResult(user.uid, {
+                    overall,
+                    dimensions: dimScores,
+                    stage: stage.stage,
+                }).catch(err => console.log('Error saving quiz result:', err));
+            }
+        }, [phase]);
 
         return (
             <View style={styles.container}>

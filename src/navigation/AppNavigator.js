@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getLatestQuizResult } from '../services/dbService';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -76,8 +77,23 @@ const MainTabs = () => {
 
 const AppNavigator = () => {
     const { user, loading } = useAuth();
+    const [hasQuiz, setHasQuiz] = useState(null);
 
-    if (loading) {
+    useEffect(() => {
+        const checkQuiz = async () => {
+            if (user) {
+                const result = await getLatestQuizResult(user.uid);
+                setHasQuiz(!!result);
+            } else {
+                setHasQuiz(null);
+            }
+        };
+
+        checkQuiz();
+    }, [user]);
+
+    // 👇 ADD THIS BLOCK
+    if (loading || (user && hasQuiz === null)) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -89,11 +105,16 @@ const AppNavigator = () => {
         <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
-                    <>
-                        <Stack.Screen name="MainTabs" component={MainTabs} />
-                        <Stack.Screen name="Assessment" component={AssessmentScreen} />
-                        <Stack.Screen name="Quiz" component={QuizScreen} />
-                    </>
+                    !hasQuiz ? (
+                        <>
+                            <Stack.Screen name="Quiz" component={QuizScreen} />
+                        </>
+                    ) : (
+                        <>
+                            <Stack.Screen name="MainTabs" component={MainTabs} />
+                            <Stack.Screen name="Assessment" component={AssessmentScreen} />
+                        </>
+                    )
                 ) : (
                     <>
                         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
