@@ -65,20 +65,12 @@ export const getLatestQuizResult = async (uid) => {
     const ref = collection(db, 'users', uid, 'quizResults');
     const q = query(ref, orderBy('timestamp', 'desc'), limit(1));
     const snap = await getDocs(q);
-<<<<<<< Updated upstream
-
     if (!snap.empty) {
         const doc = snap.docs[0];
         return { id: doc.id, ...doc.data() };
     }
 
     return null;
-=======
-    return snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        timestamp: d.data().timestamp?.toDate?.() || new Date(),
-    }));
 };
 
 // ─── ASSESSMENT RESULTS ──────────────────────────────
@@ -190,5 +182,4 @@ export const getUserStats = async (uid) => {
         avgScore,
         recentMoods: moods.slice(0, 7), // last 7 for weekly chart
     };
->>>>>>> Stashed changes
 };

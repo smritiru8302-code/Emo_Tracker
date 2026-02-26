@@ -287,15 +287,9 @@ const QuizScreen = ({ navigation }) => {
                         />
                         <GradientButton
                             title="Talk to AI"
-<<<<<<< Updated upstream
-                            onPress={() => navigation.navigate('MainTabs', { screen: 'Chat' })}
-                            icon={<Ionicons name="chatbubble" size={18} color={COLORS.white} />}
-                            colors={COLORS.gradientSecondary}
-=======
                             onPress={() => navigation.navigate('Chat')}
                             icon={<Ionicons name="chatbubble" size={18} color={colors.white} />}
                             colors={colors.gradientSecondary}
->>>>>>> Stashed changes
                             style={{ marginTop: SPACING.md }}
                         />
                     </View>

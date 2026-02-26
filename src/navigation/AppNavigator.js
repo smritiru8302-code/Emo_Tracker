@@ -1,11 +1,6 @@
-<<<<<<< Updated upstream
 import React, { useEffect, useState } from 'react';
 import { getLatestQuizResult } from '../services/dbService';
-import { NavigationContainer } from '@react-navigation/native';
-=======
-import React from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
->>>>>>> Stashed changes
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
@@ -37,12 +32,8 @@ const TAB_CONFIG = {
     Profile: { icon: 'person-outline', activeIcon: 'person' },
 };
 
-<<<<<<< Updated upstream
-const TabIcon = ({ route, focused, color }) => {
-=======
 const TabIcon = ({ route, focused, color, size }) => {
     const { colors, shadows } = useTheme();
->>>>>>> Stashed changes
     const config = TAB_CONFIG[route.name];
     const iconName = focused ? config.activeIcon : config.icon;
 
@@ -62,32 +53,6 @@ const TabIcon = ({ route, focused, color, size }) => {
     return <Ionicons name={iconName} size={22} color={color} />;
 };
 
-<<<<<<< Updated upstream
-const MainTabs = () => (
-    <Tab.Navigator
-        screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color }) => (
-                <TabIcon route={route} focused={focused} color={color} />
-            ),
-            tabBarActiveTintColor: COLORS.primary,
-            tabBarInactiveTintColor: COLORS.textMuted,
-            tabBarStyle: styles.tabBar,
-            tabBarLabelStyle: styles.tabLabel,
-            headerShown: false,
-        })}
-    >
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Chat" component={ChatScreen} />
-        <Tab.Screen name="Mood" component={MoodTrackerScreen} />
-        <Tab.Screen name="Resources" component={ResourcesScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
-);
-
-const AppNavigator = () => {
-    const { user, loading } = useAuth();
-    const [hasQuiz, setHasQuiz] = useState(null);
-=======
 const MainTabs = () => {
     const { colors, shadows } = useTheme();
 
@@ -125,7 +90,7 @@ const MainTabs = () => {
 const AppNavigator = () => {
     const { user, loading } = useAuth();
     const { colors, isDark } = useTheme();
->>>>>>> Stashed changes
+    const [hasQuiz, setHasQuiz] = useState(null);
 
     useEffect(() => {
         const checkQuiz = async () => {
