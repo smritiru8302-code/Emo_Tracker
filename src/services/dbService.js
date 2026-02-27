@@ -167,12 +167,14 @@ export const getUserStats = async (uid) => {
         }
     }
 
-    // Calculate average mood score (last 30 entries)
-    const recentMoods = moods.slice(0, 30);
-    const avgScore = recentMoods.length > 0
-        ? Math.round(recentMoods.reduce((sum, m) => sum + (m.score || 50), 0) / recentMoods.length)
-        : 0;
+    // Get latest quiz result
+    const latestQuiz = await getLatestQuizResult(uid);
 
+    let avgScore = 0;
+
+    if (latestQuiz && latestQuiz.overall !== undefined) {
+        avgScore = latestQuiz.overall;
+    }
     return {
         totalMoods: moods.length,
         totalQuizzes: quizSnap.size,
@@ -180,6 +182,6 @@ export const getUserStats = async (uid) => {
         totalChats: chatSnap.size,
         streak,
         avgScore,
-        recentMoods: moods.slice(0, 7), // last 7 for weekly chart
+        recentMoods: moods.slice(0, 7),
     };
-};
+}

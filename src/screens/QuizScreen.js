@@ -147,7 +147,7 @@ const QuizScreen = ({ navigation }) => {
     useEffect(() => {
         if (phase === 'results' && user && !resultsSaved) {
             const { dimScores, overall } = calculateResults();
-            const stage = getStage(overall);
+            const stage = getStage(overall, colors);
 
             setResultsSaved(true);
 
@@ -157,7 +157,7 @@ const QuizScreen = ({ navigation }) => {
                 stage: stage.stage,
             }).catch(err => console.log('Error saving quiz result:', err));
         }
-    }, [phase, user, resultsSaved]);
+    }, [phase, user, resultsSaved, colors]);
 
     // ─── INTRO PHASE ─────────────────────────────────────
     if (phase === 'intro') {
@@ -275,6 +275,16 @@ const QuizScreen = ({ navigation }) => {
 
                     {/* Actions */}
                     <View style={styles.actionBtns}>
+
+                        <GradientButton
+                            title="Go to Dashboard"
+                            onPress={() =>
+                                navigation.navigate("MainTabs", {
+                                    screen: "Home",
+                                })
+
+                            }
+                        />
                         <GradientButton
                             title="Retake Quiz"
                             onPress={() => {
@@ -287,7 +297,11 @@ const QuizScreen = ({ navigation }) => {
                         />
                         <GradientButton
                             title="Talk to AI"
-                            onPress={() => navigation.navigate('Chat')}
+                            onPress={() =>
+                                navigation.navigate('MainTabs', {
+                                    screen: 'Chat',
+                                })
+                            }
                             icon={<Ionicons name="chatbubble" size={18} color={colors.white} />}
                             colors={colors.gradientSecondary}
                             style={{ marginTop: SPACING.md }}
@@ -354,8 +368,10 @@ const QuizScreen = ({ navigation }) => {
                 <View style={styles.spectrumRow}>
                     {SCALE_LABELS.map((label, idx) => {
                         const isSelected = selectedValue === idx;
-                        const baseSize = idx === 0 || idx === 6 ? 48 : idx === 1 || idx === 5 ? 42 : idx === 2 || idx === 4 ? 36 : 32;
-                        const scaleColor = SCALE_COLORS[idx];
+                        const baseSize =
+                            idx === 0 || idx === 6 ? 48 :
+                                idx === 1 || idx === 5 ? 42 :
+                                    idx === 2 || idx === 4 ? 36 : 32;
 
                         return (
                             <TouchableOpacity
@@ -364,19 +380,29 @@ const QuizScreen = ({ navigation }) => {
                                 activeOpacity={0.7}
                                 style={styles.spectrumItem}
                             >
-                                <View style={[
-                                    styles.spectrumCircle,
-                                    {
-                                        width: baseSize,
-                                        height: baseSize,
-                                        borderRadius: baseSize / 2,
-                                        backgroundColor: isSelected ? scaleColors[idx] : scaleColors[idx] + '20',
-                                        borderWidth: isSelected ? 3 : 1,
-                                        borderColor: isSelected ? scaleColors[idx] : scaleColors[idx] + '40',
-                                    },
-                                ]}>
+                                <View
+                                    style={[
+                                        styles.spectrumCircle,
+                                        {
+                                            width: baseSize,
+                                            height: baseSize,
+                                            borderRadius: baseSize / 2,
+                                            backgroundColor: isSelected
+                                                ? scaleColors[idx]
+                                                : scaleColors[idx] + '20',
+                                            borderWidth: isSelected ? 3 : 1,
+                                            borderColor: isSelected
+                                                ? scaleColors[idx]
+                                                : scaleColors[idx] + '40',
+                                        },
+                                    ]}
+                                >
                                     {isSelected && (
-                                        <Ionicons name="checkmark" size={baseSize * 0.45} color={colors.white} />
+                                        <Ionicons
+                                            name="checkmark"
+                                            size={baseSize * 0.45}
+                                            color={colors.white}
+                                        />
                                     )}
                                 </View>
                             </TouchableOpacity>
