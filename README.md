@@ -32,13 +32,13 @@ Develop an AI-driven solution that analyzes user input to identify early warning
 (React / HTML / CSS / Next.js)
 
 **Backend:**  
-(Node.js / Python / Express/ Firebase)
+(Node.js / Python / Firebase)
 
 **Machine Learning / NLP:**  
 (Sentiment Analysis Model / NLP Library)
 
 **Database:**  
-(MongoDB / Firebase / MySQL)
+(Firebase / MySQL)
 
 ---
 
